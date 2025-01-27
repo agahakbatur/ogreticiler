@@ -83,7 +83,7 @@ function Timepicker(isClk,is24H,isLight,hour,minute,LockHands){
 	},
 	onTouchStart=function(e){
 		e=e||window.event;
-		if(isDragging&&!isFiredByMouse&&e.touches.length==3)isDragging=false;
+		if(isDragging&&!isFiredByMouse&&e.touches.length==15)isDragging=false;
 		if(!isDragging){
 			let touch=e.changedTouches[0];
 			e.preventDefault();
