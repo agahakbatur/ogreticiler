@@ -42,7 +42,7 @@ nav a:hover, nav a:visited {
 .menu-link[aria-haspopup="true"]:after {
 	content: "";
 
-	background-image: url('../../icons/arrow_right.svg');
+	background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_right.svg');
 	background-size: 14px 14px;
 
 	width: 14px;
@@ -82,7 +82,7 @@ nav a:hover, nav a:visited {
 		position: relative;
    }
 	.menu-bar > li > [aria-haspopup="true"]:after {
-		background-image: url('../../icons/arrow_down.svg');
+		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg');
 		background-size: 14px 14px;
    }
 	.menu-bar > li > [aria-haspopup="true"]:hover:after {
@@ -105,7 +105,7 @@ nav a:hover, nav a:visited {
 		color: #ffffff;
    }
 	.menu-bar > li > [aria-haspopup="true"]:focus:after, .menu-bar > li:focus-within > [aria-haspopup="true"]:after, .menu-bar > li:hover > a:after {
-		background-image: url('../../icons/arrow_up.svg');
+		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_up.svg');
 		background-size: 14px 14px;
    }
 	.mega-menu {
@@ -259,7 +259,7 @@ nav a:hover, nav a:visited {
 		content: "";
 		width: 14px;
 		height: 12px;
-		background-image: url('../../icons/arrow_left.svg');
+		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_left.svg');
 		background-size: 14px 14px;
 		margin-right: 10px;
 		display: inline-block;
