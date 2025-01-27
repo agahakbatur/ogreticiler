@@ -1,0 +1,276 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Saat Okuma Öğrenimi</title>
+	<link href="https://www.cssscript.com/wp-includes/css/sticky.css" rel="stylesheet" type="text/css">
+	<style>
+		body { background-color: #fafafa; font-family: 'Roboto'; }
+		/* .container { margin: 150px auto; max-width: 960px; max-height: 2000px} */
+	</style>
+      
+</head>
+
+<body onload="baslangictaCalis()">
+
+	<div class="container">
+
+		<div>
+			<a href="javascript:window.history.back();"> <font size="3" color="#330000">&lt;Geri</font></a>
+			<br>
+			<label> <font size="6" color="#000000"> <strong> Saatleri Okumayı Öğrenelim </strong> </font> </label>
+		</div>
+
+		<div>
+	
+		<!-- Boşluk bırakmak için -->
+		<label> <font size="2"> <strong>    </strong> </font> </label>
+				 <label><p></p></label>
+				 <label><p></p></label>
+				 <label><p></p></label>
+				 <label> <font size="3" color="#000000"> <strong> Sorular Nasıl Olsun? </strong> </font> </label>
+			<div style="width:100%;">
+				<div class="switch-field" style="width:35%; height:35px; float: left;">
+				
+					 <input type="radio" id="radio-one" name="OkunusmuDijitalmi" value="yes" onclick="SoruyuSaateYukle('')"/>
+					 <label for="radio-one">Okunuş</label>
+					 <input type="radio" id="radio-two"  name="OkunusmuDijitalmi" value="no" onclick="SoruyuSaateYukle('')" checked/>
+					 <label for="radio-two">Dijital</label>
+	
+				 </div>
+				<div style="height:35px;margin-left:1%;width: 100%;">
+
+					<label class="swYesNo switch-3 switch-candy" style="display:flex;text-align:center;align-items:center;height:40px;width:45%;"><font size="3"><strong>24 Saat Biçimi:</strong></font>
+     
+						<input id="idSWYesNo12sa" style="width:15%;" onclick="saatiYenile('')" checked name="nameRd24ve12sa" class="green" type="radio"/>
+						<label for="idSWYesNo12sa" class="green"><strong>12 saat</strong></label>
+					  
+						<input id="idSWYesNo24sa" style="width:15%;" onclick="saatiYenile('')" unchecked name="nameRd24ve12sa" class="red" type="radio"/>
+						<label for="idSWYesNo24sa" class="red"><strong>24 saat</strong></label>
+					  </label>
+				</div>
+
+			</div>
+		</div>
+		<!-- Boşluk bırakmak için -->
+		<label> <font size="2"> <strong>    </strong> </font> </label>
+					
+		<div>
+			<label> <font size="3" color="#000000"> <strong> Bir kategori seçin:</strong> </font> </label>
+			<ul class="cbKategori">
+				<li><input type="checkbox" id="cbBir" value="tam" onclick="kategoriTams()" checked><label for="cbBir">Tam Saatler</label></li>
+				<li><input type="checkbox" id="cbIki" value="yarim" onclick="kategoriYarims()"><label for="cbIki">Yarım Saatler</label></li>
+				<li><input type="checkbox" id="cbUc" value="ceyrek" onclick="kategoriCeyreks()"><label for="cbUc">Çeyrek Saatler</label></li>
+				<p></p>
+				<li><input type="checkbox" id="cbDort" value="gece" onclick="kategoriGeces()"><label for="cbDort">'Geçe'li Saatler</label></li>
+				<li><input type="checkbox" id="cbBes" value="kala" onclick="kategoriKalas()"><label for="cbBes">'Kala'lı Saatler</label></li>
+			</ul>
+		</div>
+		<!-- Boşluk bırakmak için -->
+		<label> <font size="2"> <strong>    </strong> </font> </label>
+		<div hidden>
+			<!-- BU GİZLİ DIV DE, SAATİN KURULUMUNDAN ÖNCE ATANMASI GEREKEN AYARLAR BULUNUYOR -->
+			<input type="checkbox" id="hour24" class="h24" checked/>
+			<label for="hour24">24 saat</label>
+	
+			<input type="checkbox" id="kollarinDurumunuGoster" class="kolDurumunuGoster" checked/>
+			<label for="kollarinDurumunuGoster">Dijital Saat</label>
+	
+			<input type="checkbox" id="DjCloTextMode" class="djcRM" checked/>
+			<label for="DjCloTextMode">Okunuş Modu</label>
+	
+			<input type="checkbox" id="dilID" class="dilEng" unchecked/>
+			<label for="dilEng">English</label>
+	
+			<input type="checkbox" id="idDogruCevabiGostermeIzni" class="clDogruCevabiGostermeIzni" unchecked/>
+			<label for="idDogruCevabiGostermeIzni">Doğru Cevabı Gösterme İzni</label>
+		</div>
+		<label class="toggle">
+			<input class="toggle-checkbox" type="checkbox" id="idCevapMetniGoster" unchecked onclick="saatiYenile()">
+			<div class="toggle-switch"></div>
+			<span class="toggle-label" style="font-size:12px">Okunuşunu Göster</span>
+		  </label>
+		  <label class="toggle">
+			<input class="toggle-checkbox" type="checkbox" id="idAktifSaatiGoster" checked onclick="saatiYenile()">
+			<div class="toggle-switch"></div>
+			<span class="toggle-label" style="font-size:12px">Saati Göster</span>
+		  </label>
+	
+		<br></br>
+		<div class="two-col">
+			<div class="col1">
+				<label id="idSoruIndex">1</label>
+			</div>
+		
+			<div class="col2">
+				<label id="idSoruSayisi">12</label>
+			</div>
+		</div>
+
+
+	<label id="idSoruMetni" hidden>11:30</label>
+
+	<div id="timepicker"></div>
+	<link rel="stylesheet" href="libs/timepicker.css" />
+
+
+	<script type="text/javascript" src="libs/timepicker.js"></script>
+	<script type="text/javascript">
+		
+		var SorudakiSaatMetni ="";
+
+		function TimePickerJSdeki_CevabiGoster() {
+
+			document.getElementById('idDogruCevabiGostermeIzni').checked = true;
+			saatiYenile();
+			document.getElementById('idDogruCevabiGostermeIzni').checked = false;
+
+		}
+		function saatiYenile(){
+			var sorununkendisi= aktifSoruMetni;
+			SoruyuSaateYukle(sorununkendisi);
+		}
+
+		function SoruyuSaateYukle(SoruMetni) {
+			document.getElementById("timepicker").innerHTML = ""
+			if (SoruMetni === "" || SoruMetni === undefined) {
+				SoruMetni = aktifSoruMetni;
+			}
+
+		var inputElements = document.getElementsByName('nameRd24ve12sa');
+		let h24checkedValue = false;
+		h24checkedValue = inputElements[0].checked;
+		h24checkedValue = !h24checkedValue;
+
+		if (h24checkedValue){
+			let strSaat_metni ="";
+			let htmlYdrH = 0;
+			let htmlYdrM = "";
+
+			strSaat_metni =SoruMetni.split(" ")[0]
+			htmlYdrH = parseInt(strSaat_metni.split(":")[0]);
+			htmlYdrM = parseInt(strSaat_metni.split(":")[1]).toString();
+			if (htmlYdrM.length < 2) {
+				htmlYdrM = "0"+htmlYdrM	
+			}
+			if (htmlYdrH < 11) {
+				htmlYdrH = htmlYdrH+12
+			}
+			SoruMetni = htmlYdrH + ":" + htmlYdrM
+		}
+		SorudakiSaatMetni = SoruMetni
+
+		timepicker = new Timepicker();
+		document.getElementById('timepicker').appendChild(timepicker.getElement());
+
+		timepicker.getElement().style.marginTop = '10px';
+		timepicker.setLightTheme(true)
+		
+		timepicker.setLockHands(false)
+		timepicker.setTimeStr(SorudakiSaatMetni,h24checkedValue);
+
+		timepicker.show();
+
+		}
+
+		timepicker.callback = function() {
+			SorudakiSaatMetni = timepicker.getTimeString
+		};
+		
+		function setATime() {
+		let strSaat_metni =SorudakiSaatMetni.split(" ")[0]
+		let dilim24saat_metni = SorudakiSaatMetni.split(" ")[1]
+		let ydrH = parseInt(strSaat_metni.split(":")[0])
+		let ydrM = parseInt(strSaat_metni.split(":")[1])
+
+		timepicker.setHours(ydrH)
+		timepicker.setMinutes(ydrM)
+		timepicker.show();
+		}
+		
+		function strBoslukVarmi(s) {
+			return s.indexOf(' ');
+		}
+		function boolCheckGirenTxt(girenTxt) {
+			if (girenTxt.length!==8) {
+				return false;
+			}
+			if (girenTxt.indexOf(':')!==2) {
+				return false;
+			}
+			if (girenTxt.indexOf(' ')!==5) {
+				return false;
+			}
+			return true;
+		}
+	</script>
+	<div>
+				<button class="GelenBTNsol GelenBTNsol1" id="btnPrev" onclick="OncekiSoru()" disabled> 
+					Önceki
+				</button> 
+		
+				<button class="GelenBTNsag GelenBTNsag1" id="btnNext" onclick="SonrakiSoru()"> 
+					Sonraki 
+				</button>
+	</div>
+	<div>
+		<hr style="height:7px; visibility:hidden;" />
+		<button class="clBtnCevabiGoster" role="button" id="btnCevabiGsoter" onclick="TimePickerJSdeki_CevabiGoster()" style="height:50px;width:280px">Doğru Cevabı Göster</button>
+	</div>
+
+	<div>
+		<br>
+		<button id="idBtnNasilKullanilir" class="btnNasilKullanilir" role="button" style="width:280px">Nasıl Kullanılır? / Yardım</button>
+	</div>
+
+
+	<div>
+		<br>
+		<label> <font size="2" color="#FFFFFF">Bu yazılım ücretsizdir. Reklâm içermez.</font> </label>
+		<br>
+		<a href="https://mit-license.org" <font size="2" color="#FFFFFF">License: MIT License</font></a> 
+		<br>
+		<label> <font size="2" color="#BBBBBB">with ZulNs @Yogyakarta's TimePicker element</font> </label>
+		<br>
+	</div>
+</div>
+
+<div id="myModal" class="modal">
+
+	<div class="modal-content">
+	  <span class="close">&times;</span>
+		<label style="padding: 15px"> <font size="5">Nasıl kullanılır?</label>
+			<br>
+		<label style="margin: auto; display: block; width: 90%;"> <font size="3"> Bu öğretici bir SINAV ortamı DEĞİL. Bir değerlendirme olmayacak. Soruları doğru çözmek için KOLLARI BASILI TUTARAK denemeler yapın, gerekirse doğru cevabı görmek için en alttaki 'Doğru Cevabı Göster' butonuna basın. Soruyu doğru yaptığınızda diğerine geçin.</font> </label>
+		<video class="videoGIF" autoplay loop muted width="340" height="420" poster="/libs/yardim.gif">
+		</video>
+	</div>
+  </div>
+  <script>
+	// Get the modal
+	var modal = document.getElementById("myModal");
+	// Get the button that opens the modal
+	var btn = document.getElementById("idBtnNasilKullanilir");
+	// Get the <span> element that closes the modal
+	var span = document.getElementsByClassName("close")[0];
+	// When the user clicks the button, open the modal 
+	btn.onclick = function() {
+	  modal.style.display = "block";
+	}
+	// When the user clicks on <span> (x), close the modal
+	span.onclick = function() {
+	  modal.style.display = "none";
+	}
+	// When the user clicks anywhere outside of the modal, close it
+	window.onclick = function(event) {
+	  if (event.target == modal) {
+		modal.style.display = "none";
+	  }
+	}
+	</script>
+
+  <script type="text/javascript" src="libs/questions.js"></script>
+</body>
+</html>
+
