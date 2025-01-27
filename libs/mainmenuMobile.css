@@ -86,7 +86,7 @@ nav a:hover, nav a:visited {
 		background-size: 14px 14px;
    }
 	.menu-bar > li > [aria-haspopup="true"]:hover:after {
-		background-image: url('../../icons/arrow_down.svg');
+		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg');
 		background-size: 14px 14px;
    }
 	.menu-bar > li > [aria-haspopup="true"]:focus ~ ul {
