@@ -418,7 +418,7 @@ updPickedTm=function(){
 		clkFace.setAttribute('height',280);
 		hourHand.setAttribute('width',20);
 		hourHand.setAttribute('height',90);
-		minuteHand.setAttribute('width',30);
+		minuteHand.setAttribute('width',12);
 		minuteHand.setAttribute('height',110);
 		secondHand.setAttribute('width',8);
 		secondHand.setAttribute('height',120);
