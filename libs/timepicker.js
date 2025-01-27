@@ -429,7 +429,7 @@ updPickedTm=function(){
 		secondHand.style.cssText='position:absolute;left:136px;top:110px;transform-origin:50% 90px';
 		jsSorununGoruntulenenSaatMetni.style.cssText='position:absolute;left:2px;top:2px;width:278px;height:20px;text-align:left;font:16px Verdana;cursor:default;text-align: center;font-weight: bold;color:rgb(255, 255, 255);background:black';
 		soruMetni.style.cssText='position:absolute;left:2px;top:22px;width:278px;height:40px;text-align:left;font:13px Verdana;cursor:default';
-		aktifSaat.style.cssText='position:absolute;left:5px;top:80px;width:40px;height:30px;text-align:left;font:13px Verdana;cursor:default;background:white;color:gray';
+		aktifSaat.style.cssText='position:absolute;left:5px;top:80px;width:40px;height:30px;text-align:left;font:15px Verdana;cursor:default;background:white;color:gray';
 
 		timeStr.style.cssText='position:relative;display:grid;left:2px;top:330px;width:280px;height:60px;text-align:center;align-items:center;font:20px Verdana;font-weight: bold;cursor:default';
 		
