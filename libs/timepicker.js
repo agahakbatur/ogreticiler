@@ -83,7 +83,7 @@ function Timepicker(isClk,is24H,isLight,hour,minute,LockHands){
 	},
 	onTouchStart=function(e){
 		e=e||window.event;
-		if(isDragging&&!isFiredByMouse&&e.touches.length==50)isDragging=false;
+		if(isDragging&&!isFiredByMouse&&e.touches.length==1)isDragging=false;
 		if(!isDragging){
 			let touch=e.changedTouches[0];
 			e.preventDefault();
@@ -418,7 +418,7 @@ updPickedTm=function(){
 		clkFace.setAttribute('height',280);
 		hourHand.setAttribute('width',20);
 		hourHand.setAttribute('height',90);
-		minuteHand.setAttribute('width',12);
+		minuteHand.setAttribute('width',30);
 		minuteHand.setAttribute('height',110);
 		secondHand.setAttribute('width',8);
 		secondHand.setAttribute('height',120);
