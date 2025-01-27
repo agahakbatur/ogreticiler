@@ -375,7 +375,7 @@ updPickedTm=function(){
 			vw=window.innerWidth,
 			vh=window.innerHeight,
 			rect=tpick.getBoundingClientRect(),
-			hsSpc=dw>vw?30:0,
+			hsSpc=dw>vw?50:0,
 			scrollX=rect.left<0?rect.left:0,
 			scrollY=rect.bottom-rect.top>vh?rect.top:rect.bottom>vh-hsSpc?rect.bottom-vh+hsSpc:0;
 		window.scrollBy(scrollX,scrollY)
