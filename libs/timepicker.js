@@ -378,7 +378,7 @@ updPickedTm=function(){
 			hsSpc=dw>vw?20:0,
 			scrollX=rect.left<0?rect.left:0,
 			scrollY=rect.bottom-rect.top>vh?rect.top:rect.bottom>vh-hsSpc?rect.bottom-vh+hsSpc:0;
-			scrollY=scrollY+75px;
+			scrollY=scrollY*1.2;
 		window.scrollBy(scrollX,scrollY)
 	},
 	addEvts=function(){
