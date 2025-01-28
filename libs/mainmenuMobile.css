@@ -41,7 +41,9 @@ nav a:hover, nav a:visited {
 }
 .menu-link[aria-haspopup="true"]:after {
 	content: "";
-
+	/*  FOLDER DEĞİŞİMİ YDr */
+	/* background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_right.svg'); */
+	/* background-image: url('/icons/arrow_right.svg'); */
 	background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_right.svg');
 	background-size: 14px 14px;
 
@@ -82,10 +84,16 @@ nav a:hover, nav a:visited {
 		position: relative;
    }
 	.menu-bar > li > [aria-haspopup="true"]:after {
+		/*  FOLDER DEĞİŞİMİ YDr */
+		/* background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg'); */
+		/* background-image: url('/icons/arrow_down.svg'); */
 		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg');
 		background-size: 14px 14px;
    }
 	.menu-bar > li > [aria-haspopup="true"]:hover:after {
+		/*  FOLDER DEĞİŞİMİ YDr */
+		/* background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg'); */
+		/* background-image: url('/icons/arrow_down.svg'); */
 		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_down.svg');
 		background-size: 14px 14px;
    }
@@ -105,6 +113,9 @@ nav a:hover, nav a:visited {
 		color: #ffffff;
    }
 	.menu-bar > li > [aria-haspopup="true"]:focus:after, .menu-bar > li:focus-within > [aria-haspopup="true"]:after, .menu-bar > li:hover > a:after {
+		/*  FOLDER DEĞİŞİMİ YDr */
+		/* background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_up.svg'); */
+		/* background-image: url('/icons/arrow_up.svg'); */
 		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_up.svg');
 		background-size: 14px 14px;
    }
@@ -259,6 +270,9 @@ nav a:hover, nav a:visited {
 		content: "";
 		width: 14px;
 		height: 12px;
+		/*  FOLDER DEĞİŞİMİ YDr */
+		/* background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_left.svg'); */
+		/* background-image: url('/icons/arrow_left.svg'); */
 		background-image: url('https://agahakbatur.github.io/ogreticiler/icons/arrow_left.svg');
 		background-size: 14px 14px;
 		margin-right: 10px;
