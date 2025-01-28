@@ -10,10 +10,29 @@
 		/* body { background-color: #d4ff00; font-family: 'Roboto'; } */
 		/* .container { margin: 150px auto; max-width: 960px; max-height: 2000px} */
 	</style>
-      
+    <script>
+        ZiyaretciSayaci=function(){
+            var n = localStorage.getItem('on_load_counter');
+
+            if (n === null) {
+            n = 0;
+            }
+            n++;
+
+            localStorage.setItem("on_load_counter", n);
+
+            nums = n.toString().split('').map(Number);
+            document.getElementById('idZiyaretciSayaci').innerHTML = '';
+            for (var i of nums) {
+            // document.getElementById('idZiyaretciSayaci').innerHTML += '<span class="counter-item">' + i + '</span>';
+            document.getElementById('idZiyaretciSayaci').innerHTML += '<font size="2"> <strong>' + i + '</strong></font>';
+            // document.getElementById('idZiyaretciSayaci').innerHTML += i
+            }
+        };
+    </script>
 </head>
 
-<body>
+<body onload="ZiyaretciSayaci()">
 
 
   <header>
@@ -31,7 +50,9 @@
         </font>
     </label>
   </header>
-    
+    <!-- FOLDER DEĞİŞİMİ YDr -->
+	<!-- <link rel="stylesheet" href="https://agahakbatur.github.io/ogreticiler/libs/mainmenuMobile.css"> -->
+	<!-- <link rel="stylesheet" href="/libs/mainmenuMobile.css"> -->
 	<link rel="stylesheet" href="https://agahakbatur.github.io/ogreticiler/libs/mainmenuMobile.css">
 
 
@@ -97,6 +118,9 @@
                         </ul>
                     </li>
                     <li>
+                        <!-- FOLDER DEĞİŞİMİ YDr -->
+                        <!-- <a href="https://agahakbatur.github.io/ogreticiler/mat_saat.html" class="menu-link mega-menu-link">Saatleri Okumayı Öğrenelim</a> -->
+                        <!-- <a href="/mat_saat.html" class="menu-link mega-menu-link">Saatleri Okumayı Öğrenelim</a> -->
                         <a href="https://agahakbatur.github.io/ogreticiler/mat_saat.html" class="menu-link mega-menu-link">Saatleri Okumayı Öğrenelim</a>
                     </li>
                     <li class="mobile-menu-back-item">
@@ -106,23 +130,33 @@
             </li>
             
             <!-- sondaki statik link -->
-            <li> 
-                <a href="https://agahakbatur.github.io/ogreticiler/about.html" class="menu-link menu-bar-link">Hakkında</a>
+            <li> <!-- FOLDER DEĞİŞİMİ YDr -->
+                <!-- <a href="https://agahakbatur.github.io/ogreticiler/about.html" class="menu-link menu-bar-link">Hakkında</a> -->
+                <a href="/about.html" class="menu-link menu-bar-link">Hakkında</a>
             </li>
 
-            <li class="mobile-menu-header">
-                <a href="https://agahakbatur.github.io/ogreticiler/index.html" class="">
+            <li class="mobile-menu-header"> <!-- FOLDER DEĞİŞİMİ YDr -->
+                <!-- <a href="https://agahakbatur.github.io/ogreticiler/index.html" class=""> -->
+                <a href="/index.html" class="">
                     <span>Ana Sayfa</span>
                 </a>
             </li>
         </ul>
     </nav>
 </div>
+<!-- <div style="position: absolute; left: 50%;bottom:15px;text-align:center;align-items:center;place-items:center"> -->
+
+<!-- </div> -->
 <div style="position: absolute; left: 50%;bottom: 0;text-align:center;align-items:center;place-items:center">
-    <label style="color:rgb(210, 242, 248);display:flex;font-family: 'Arial';text-align:center;align-items:center;place-items:center">
+    <label style="color:rgb(210, 242, 248);display:inline-block;;font-family: 'Arial';text-align:center;align-items:center;place-items:center">
         <font size="2">
-        <strong>v0.74</strong>
+        <strong>v0.74-Counter: </strong>
         </font>
+        <label id="idZiyaretciSayaci" style="color:rgb(210, 242, 248);display:inline-block;;font-family: 'Arial';text-align:center;align-items:center;place-items:center">
+            <font size="2">
+            <strong>0</strong>
+            </font>
+        </label>
     </label>
 </div>
 </body>
