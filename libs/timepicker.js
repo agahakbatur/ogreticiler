@@ -206,9 +206,16 @@ function Timepicker(isClk,is24H,isLight,hour,minute,LockHands){
 				icHour=icHour+12
 			}
 		}
+		alert("ydrH === icHour: "+ydrH+" , "+icHour);
 		if (ydrH === icHour) {
 			if (ydrM === minute) {
 				sonuc = true;
+			}
+		} else {
+			if (icHour === 0) { // YAMA: icsaat 12 olmuyor, sıfıra dönüyor. bu da saat 12 ile yapılan karışaltırmlarda hata yapılmasına neden oluyor.
+				if (ydrM === minute) {
+					sonuc = true;
+				}
 			}
 		}
 		if (sonuc === true) {
