@@ -181,5 +181,18 @@
         </label>
     </label>
 </div>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+  $("a.counter").on("click", function(e){
+    e.preventDefault();
+    $.ajax({
+      url: 'increase_counter.php',
+      type: 'POST',
+      success: function(counterVal){
+        alert("The link has been clicked " + counterVal + " times.")
+      }
+    });
+  });
+</script>
 </body>
 </html>
