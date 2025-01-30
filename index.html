@@ -13,7 +13,7 @@
     <script>
       
 async function getSampleText() {
-            var dosyaAdi = "http://127.0.0.1:5500/libs/counter.txt";
+            var dosyaAdi = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
             var icerik;
             var sayi = 0;
             icerik = (await fetch(dosyaAdi)).text();
@@ -31,10 +31,10 @@ async function getSampleText() {
             });
         }
         function ZiyaretciSayaci4() {
-            var file = "http://127.0.0.1:5500/libs/counter.txt";
+            var file = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
             test =  getSampleText();
             $.ajax({
-            url: 'file:///http://127.0.0.1:5500/libs/increase_counter.php',
+            url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
             type: 'POST',
                 success: function(counterVal){
                 // alert("The link has been clicked " + counterVal + " times.")
