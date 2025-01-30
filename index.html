@@ -174,16 +174,13 @@ async function getSampleText() {
 </div>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script>
-  $("a.counter").on("click", function(e){
-    e.preventDefault();
     $.ajax({
       url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
       type: 'POST',
       success: function(counterVal){
-        alert("The link has been clicked " + counterVal + " times.")
+        // alert("The link has been clicked " + counterVal + " times.")
       }
     });
-  });
 </script>
 </body>
 </html>
