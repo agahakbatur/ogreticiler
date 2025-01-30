@@ -33,7 +33,7 @@ if(isset($_COOKIE['coki'])){
 	}
 
 	if($sesid == $_COOKIE['coki']){
-	      $count = file_get_contents("counter.txt");
+	      $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
 	      $count = trim($count);
 	      $count = $count + 1;
 	      $fl = fopen("counter.txt","w+");
@@ -45,7 +45,7 @@ if(isset($_COOKIE['coki'])){
 
 }
 
- $count = file_get_contents("counter.txt");
+ $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
  ?>
 <h1>Website Visitor Counter In PHP</h1>
 <br/>
