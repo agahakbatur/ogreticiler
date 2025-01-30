@@ -10,8 +10,14 @@
 		/* body { background-color: #d4ff00; font-family: 'Roboto'; } */
 		/* .container { margin: 150px auto; max-width: 960px; max-height: 2000px} */
 	</style>
-    <script>
-      <?php
+  
+</head>
+
+<!-- <body onload="ZiyaretciSayaci4()"> -->
+<body>
+
+
+<?php
 session_start();
 $sesid = session_id();
  
@@ -27,8 +33,7 @@ if(isset($_COOKIE['coki'])){
 	}
 
 	if($sesid == $_COOKIE['coki']){
-	      // $count = file_get_contents("counter.txt");
-	      $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
+	      $count = file_get_contents("counter.txt");
 	      $count = trim($count);
 	      $count = $count + 1;
 	      $fl = fopen("counter.txt","w+");
@@ -39,42 +44,14 @@ if(isset($_COOKIE['coki'])){
 	  
 
 }
-async function getSampleText() {
-            var dosyaAdi = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
-            var icerik;
-            var sayi = 0;
-            icerik = (await fetch(dosyaAdi)).text();
-            // alert ("icerik: "+icerik)
-            icerik = icerik.then(function(result) {
-                // alert("result: "+result);
-                sayi = parseInt(result) + 1;
-                // sayi = parseInt(result);
-                
 
-                document.getElementById('idZiyaretciSayaci').innerHTML += '<font size="2"> <strong>'+sayi+'</strong></font>';
-                // alert("fff: "+sayi)
-                // SayiyiYaz(sayi)
-                return sayi;
-            });
-        }
-        function ZiyaretciSayaci4() {
-            var file = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
-            test =  getSampleText();
-            // $.ajax({
-            // url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
-            // type: 'POST',
-            //     success: function(counterVal){
-            //     // alert("The link has been clicked " + counterVal + " times.")
-            //     }
-            // });
-        }
+ $count = file_get_contents("counter.txt");
+ ?>
+<h1>Website Visitor Counter In PHP</h1>
+<br/>
+<h2>Visitor Counter : <?php echo $count; ?></h2>
 
-    </script>
-</head>
-
-<body onload="ZiyaretciSayaci4()">
-
-
+	
   <header>
 	<!-- <label style="color:white;display:block;font-family:'Segoe Script';text-align:center;align-items:center;place-items:center"> -->
     <label style="color:white;display:block;font-family:'Brush Script MT', cursive;text-align:center;align-items:center;place-items:center">
