@@ -13,45 +13,7 @@
   
 </head>
 
-<!-- <body onload="ZiyaretciSayaci4()"> -->
 <body>
-
-
-<?php
-session_start();
-$sesid = session_id();
- 
-
-if(!isset($_COOKIE['coki'])){
-setcookie("coki", "$sesid", time()+60);
-setcookie("tt", time()+60, time()+60);
-}
-if(isset($_COOKIE['coki'])){
-	if(time() > $_COOKIE['tt']){
-	echo "sss";
-	setcookie("coki", "", time()-60);
-	}
-
-	if($sesid == $_COOKIE['coki']){
-	      $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
-	      $count = trim($count);
-	      $count = $count + 1;
-	      $fl = fopen("counter.txt","w+");
-	      fwrite($fl,$count);
-	      fclose($fl);
-	      setcookie("coki", "Ok", time()+60);
-	} 
-	  
-
-}
-
- $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
- ?>
-<h1>Website Visitor Counter In PHP</h1>
-<br/>
-<h2>Visitor Counter : <?php echo $count; ?></h2>
-
-	
   <header>
 	<!-- <label style="color:white;display:block;font-family:'Segoe Script';text-align:center;align-items:center;place-items:center"> -->
     <label style="color:white;display:block;font-family:'Brush Script MT', cursive;text-align:center;align-items:center;place-items:center">
@@ -71,9 +33,6 @@ if(isset($_COOKIE['coki'])){
 	<!-- <link rel="stylesheet" href="https://agahakbatur.github.io/ogreticiler/libs/mainmenuMobile.css"> -->
 	<!-- <link rel="stylesheet" href="/libs/mainmenuMobile.css"> -->
 	<link rel="stylesheet" href="https://agahakbatur.github.io/ogreticiler/libs/mainmenuMobile.css">
-
-
-  
 
   <div class="nav">
     <nav>
@@ -176,15 +135,6 @@ if(isset($_COOKIE['coki'])){
         </label>
     </label>
 </div>
-<!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script>
-    $.ajax({
-      url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
-      type: 'POST',
-      success: function(counterVal){
-        // alert("The link has been clicked " + counterVal + " times.")
-      }
-    });
-</script> -->
+
 </body>
 </html>
