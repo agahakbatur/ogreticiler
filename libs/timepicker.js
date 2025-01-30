@@ -7,6 +7,7 @@
  *    - Drops timepicker.css
  *    - Adds/changes clock theme
  *    - Changes some public methods
+ * Adapted by YDr, 30.01.2025
  */
 'use strict';
 var metniGoster = false;
@@ -817,7 +818,7 @@ this.setTimeStr=function(saatMetni,yirmidortSaatModuNeOlsun){
 		if(isHidden){
 			isHidden=!isHidden;
 			tpick.style.display='';
-			scrollToFix()
+			scrollToFix() 
 		}
 	};
 	if(!cssTransform){
