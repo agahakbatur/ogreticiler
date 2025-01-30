@@ -206,7 +206,6 @@ function Timepicker(isClk,is24H,isLight,hour,minute,LockHands){
 				icHour=icHour+12
 			}
 		}
-		alert("ydrH === icHour: "+ydrH+" , "+icHour);
 		if (ydrH === icHour) {
 			if (ydrM === minute) {
 				sonuc = true;
