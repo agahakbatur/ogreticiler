@@ -11,7 +11,34 @@
 		/* .container { margin: 150px auto; max-width: 960px; max-height: 2000px} */
 	</style>
     <script>
-      
+      <?php
+session_start();
+$sesid = session_id();
+ 
+
+if(!isset($_COOKIE['coki'])){
+setcookie("coki", "$sesid", time()+60);
+setcookie("tt", time()+60, time()+60);
+}
+if(isset($_COOKIE['coki'])){
+	if(time() > $_COOKIE['tt']){
+	echo "sss";
+	setcookie("coki", "", time()-60);
+	}
+
+	if($sesid == $_COOKIE['coki']){
+	      // $count = file_get_contents("counter.txt");
+	      $count = file_get_contents("https://agahakbatur.github.io/ogreticiler/libs/counter.txt");
+	      $count = trim($count);
+	      $count = $count + 1;
+	      $fl = fopen("counter.txt","w+");
+	      fwrite($fl,$count);
+	      fclose($fl);
+	      setcookie("coki", "Ok", time()+60);
+	} 
+	  
+
+}
 async function getSampleText() {
             var dosyaAdi = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
             var icerik;
@@ -33,13 +60,13 @@ async function getSampleText() {
         function ZiyaretciSayaci4() {
             var file = "https://agahakbatur.github.io/ogreticiler/libs/counter.txt";
             test =  getSampleText();
-            $.ajax({
-            url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
-            type: 'POST',
-                success: function(counterVal){
-                // alert("The link has been clicked " + counterVal + " times.")
-                }
-            });
+            // $.ajax({
+            // url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
+            // type: 'POST',
+            //     success: function(counterVal){
+            //     // alert("The link has been clicked " + counterVal + " times.")
+            //     }
+            // });
         }
 
     </script>
@@ -172,7 +199,7 @@ async function getSampleText() {
         </label>
     </label>
 </div>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script>
     $.ajax({
       url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
@@ -181,6 +208,6 @@ async function getSampleText() {
         // alert("The link has been clicked " + counterVal + " times.")
       }
     });
-</script>
+</script> -->
 </body>
 </html>
