@@ -186,7 +186,7 @@
   $("a.counter").on("click", function(e){
     e.preventDefault();
     $.ajax({
-      url: 'increase_counter.php',
+      url: 'https://agahakbatur.github.io/ogreticiler/libs/increase_counter.php',
       type: 'POST',
       success: function(counterVal){
         alert("The link has been clicked " + counterVal + " times.")
