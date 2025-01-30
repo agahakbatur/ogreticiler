@@ -11,50 +11,41 @@
 		/* .container { margin: 150px auto; max-width: 960px; max-height: 2000px} */
 	</style>
     <script>
-        ZiyaretciSayaci2=function(){
-        expiration = new Date;
-        expiration.setMonth(expiration.getMonth()+6)
-        counter = eval(cookieVal("total_visited"))
-        counter++
-        document.cookie = "total_visited="+counter+";expires=" + expiration.toGMTString()
-        // document.getElementById('idZiyaretciSayaci').innerHTML = "<center><h3>You visited this page <label style='font-size:40px;' class='text-info'>"+counter+"</label> times.</h3></center>";
-        document.getElementById('idZiyaretciSayaci').innerHTML += '<font size="2"> <strong>' + counter + '</strong></font>';
+      
+async function getSampleText() {
+            var dosyaAdi = "http://127.0.0.1:5500/libs/counter.txt";
+            var icerik;
+            var sayi = 0;
+            icerik = (await fetch(dosyaAdi)).text();
+            // alert ("icerik: "+icerik)
+            icerik = icerik.then(function(result) {
+                // alert("result: "+result);
+                sayi = parseInt(result) + 1;
+                // sayi = parseInt(result);
+                
+
+                document.getElementById('idZiyaretciSayaci').innerHTML += '<font size="2"> <strong>'+sayi+'</strong></font>';
+                // alert("fff: "+sayi)
+                // SayiyiYaz(sayi)
+                return sayi;
+            });
         }
-        
-        function cookieVal(cookieName) {
-                thisCookie = document.cookie.split("; ")
-                for (i=0; i<thisCookie.length; i++){
-                        if (cookieName == thisCookie[i].split("=")[0]){
-                                return thisCookie[i].split("=")[1]
-                        }
+        function ZiyaretciSayaci4() {
+            var file = "http://127.0.0.1:5500/libs/counter.txt";
+            test =  getSampleText();
+            $.ajax({
+            url: 'file:///http://127.0.0.1:5500/libs/increase_counter.php',
+            type: 'POST',
+                success: function(counterVal){
+                // alert("The link has been clicked " + counterVal + " times.")
                 }
-                return 0;
+            });
         }
-     
-    
 
-        ZiyaretciSayaci=function(){
-            var n = localStorage.getItem('on_load_counter');
-
-            if (n === null) {
-            n = 0;
-            }
-            n++;
-
-            localStorage.setItem("on_load_counter", n);
-
-            nums = n.toString().split('').map(Number);
-            document.getElementById('idZiyaretciSayaci').innerHTML = '';
-            for (var i of nums) {
-            // document.getElementById('idZiyaretciSayaci').innerHTML += '<span class="counter-item">' + i + '</span>';
-            document.getElementById('idZiyaretciSayaci').innerHTML += '<font size="2"> <strong>' + i + '</strong></font>';
-            // document.getElementById('idZiyaretciSayaci').innerHTML += i
-            }
-        };
     </script>
 </head>
 
-<body onload="ZiyaretciSayaci2()">
+<body onload="ZiyaretciSayaci4()">
 
 
   <header>
