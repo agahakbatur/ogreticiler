@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr" dir="ltr">
 
@@ -140,6 +139,32 @@
         </label>
     </label>
 </div>
+
+<!-- Ziyaret sayacı (GoatCounter) -->
+<script data-goatcounter="https://agah.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+<script>
+    // Sayfaların ziyaret sayılarını sürüm numarasının yanında göster
+    (function () {
+        var SAYFALAR = [
+            { ad: 'Saat okuyucu',      yol: '/ogreticiler/mat_saat.html' },
+            { ad: 'Okuma yardımcısı',  yol: '/ogreticiler/okuma-yardimcisi.html' }
+        ];
+
+        function sayiAl(yol) {
+            return fetch('https://agah.goatcounter.com/counter/' + encodeURIComponent(yol) + '.json')
+                .then(function (r) { return r.ok ? r.json() : { count: '0' }; }) // henüz ziyaret yoksa 0
+                .then(function (d) { return d.count || '0'; })
+                .catch(function () { return '–'; });
+        }
+
+        Promise.all(SAYFALAR.map(function (s) { return sayiAl(s.yol); })).then(function (sayilar) {
+            var metin = SAYFALAR.map(function (s, i) { return s.ad + ': ' + sayilar[i]; }).join(', ');
+            var alan = document.querySelector('#idZiyaretciSayaci strong');
+            if (alan) alan.textContent = '\u00A0\u00A0' + metin;
+        });
+    })();
+</script>
 
 </body>
 </html>
