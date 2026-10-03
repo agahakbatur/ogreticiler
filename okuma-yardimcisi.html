@@ -387,7 +387,7 @@
         <div class="sheet-sub" style="font-size:1.1rem;font-weight:bold;color:#2c3e50;margin-top:0">Ayarlar</div>
         <label class="switch-row">
             <span>Hecele (A<span class="syl-red">li</span>)</span>
-            <input type="checkbox" id="syllable-toggle">
+            <input type="checkbox" id="syllable-toggle" checked>
             <span class="switch"></span>
         </label>
         <label class="switch-row">
@@ -402,7 +402,7 @@
         </label>
         <label class="switch-row" id="speak-row">
             <span>Görüntülenen kelimeyi seslendir</span>
-            <input type="checkbox" id="speak-toggle">
+            <input type="checkbox" id="speak-toggle" checked>
             <span class="switch"></span>
         </label>
         <div class="voice-info" id="voice-info"></div>
@@ -694,9 +694,11 @@
             info.textContent = 'Kullanılan ses: ' + turkishVoice.name;
             info.className = 'voice-info';
         } else if (voiceCount > 0) {
-            info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden başka dilde okunuyor. ' +
-                'Çözüm: Telefon <b>Ayarlar › Metin okuma çıkışı</b> (Erişilebilirlik ya da Dil ve giriş altında) › ' +
-                'Google motorunun ⚙️ ayarı › <b>Ses verilerini yükle</b> › Türkçe\'yi indirin, sonra sayfayı yeniden açın.';
+            info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden sayfa okuma yapmıyor. ' +
+                'Çözüm: Telefon <b>Ayarlar › Metin okuma çıkışı</b> bölümüne girin ' +
+                '(Samsung\'da Genel yönetim altında, diğer telefonlarda Erişilebilirlik ya da Dil ve giriş altında). ' +
+                'Tercih edilen motor olarak <b>Google</b>\'ı seçin, yanındaki ⚙️ ayarından ' +
+                '<b>Ses verilerini yükle › Türkçe</b>\'yi indirin, sonra sayfayı yeniden açın.';
             info.className = 'voice-info warn';
         } else {
             info.textContent = 'Sesler yükleniyor…';
@@ -723,20 +725,29 @@
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'tr-TR';
         if (useVoice && turkishVoice) u.voice = turkishVoice;
-        u.rate = 0.8; // çocuklar için biraz yavaş
+        u.rate = 0.6; // çocuklar için yavaş (önceki 0.8'den %25 daha yavaş)
         return u;
     }
 
     function showSpeakError(msg) {
         statusMessage.textContent = msg;
-        setTimeout(() => { if (statusMessage.textContent === msg) statusMessage.textContent = ''; }, 6000);
+        setTimeout(() => { if (statusMessage.textContent === msg) statusMessage.textContent = ''; }, 8000);
     }
 
-    function speak(text) {
+    const NO_TURKISH_MSG = 'Telefonunuzda Türkçe ses yüklü değil, bu yüzden okunmadı. ' +
+        'Nasıl yükleneceğini görmek için ⚙️ Ayarlar\'a dokunun.';
+
+    function speak(text, waited) {
         if (!text) return;
         if (inWebView) { showSpeakError('Seslendirme için sayfayı Chrome\'da açın (⋮ › Chrome\'da aç).'); return; }
         if (!canSpeak) { showSpeakError('Bu tarayıcı seslendirmeyi desteklemiyor.'); return; }
         if (!turkishVoice) pickVoice(); // Android'de ses listesi geç gelebilir
+        if (!turkishVoice) {
+            // Ses listesi henüz gelmediyse kısa bir süre bekleyip tekrar bak
+            if (voiceCount === 0 && !waited) { setTimeout(() => speak(text, true), 700); return; }
+            // Sesler geldi ama Türkçe yok: yanlış dilde okumak yerine uyar
+            if (voiceCount > 0) { showSpeakError(NO_TURKISH_MSG); return; }
+        }
         const clean = text.replace(/-/g, '');
         const u = makeUtterance(clean, true);
         let started = false;
@@ -768,9 +779,14 @@
         if (speakToggle.checked) speakCurrent(); else stopSpeaking();
     });
 
-    [[syllableToggle, 'heceleAyari'], [shrinkToggle, 'kucultAyari'], [splitToggle, 'hecedenBolAyari'], [speakToggle, 'seslendirAyari']]
-        .forEach(([toggle, key]) => {
-            try { toggle.checked = localStorage.getItem(key) === '1'; } catch (e) {}
+    // Hecele ve Seslendir varsayılan olarak açık; kullanıcı değiştirdiyse onun seçimi geçerli
+    [[syllableToggle, 'heceleAyari', true], [shrinkToggle, 'kucultAyari', false], [splitToggle, 'hecedenBolAyari', false], [speakToggle, 'seslendirAyari', true]]
+        .forEach(([toggle, key, varsayilan]) => {
+            toggle.checked = varsayilan;
+            try {
+                const kayitli = localStorage.getItem(key);
+                if (kayitli !== null) toggle.checked = kayitli === '1';
+            } catch (e) {}
             toggle.addEventListener('change', () => {
                 try { localStorage.setItem(key, toggle.checked ? '1' : '0'); } catch (e) {}
                 updateSplitRowState();
