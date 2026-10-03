@@ -309,7 +309,7 @@
     <div class="js-warning" id="js-warning">
         Bu sayfa, açıldığı uygulamada çalışamıyor.<br>
         Lütfen dosyayı <strong>Chrome</strong> ile açın:<br>
-        Dosyalar uygulamasında dosyaya uzun basın → ⋮ → <em>Birlikte aç</em> → Chrome.
+        Dosyalar uygulamasında dosyaya uzun basın › ? › <em>Birlikte aç</em> › Chrome.
     </div>
     <div class="letter-grid" id="letter-grid">
         <button class="letter-cell" data-letter="A" disabled>A</button>
@@ -665,6 +665,8 @@
     let turkishVoice = null;
 
     let voiceCount = 0;
+    // Bağlantı bir uygulamanın içinde (WebView) açıldıysa seslendirme çalışmaz
+    const inWebView = /; wv\)/.test(navigator.userAgent) || /(FBAN|FBAV|Instagram|WhatsApp)/i.test(navigator.userAgent);
 
     // Türkçe sesi bul (Android'de dil kodu "tr-TR", "tr_TR" ya da "tur" gelebilir)
     function pickVoice() {
@@ -681,7 +683,11 @@
 
     function updateVoiceInfo() {
         const info = $('voice-info');
-        if (!canSpeak) {
+        if (inWebView) {
+            info.innerHTML = 'Sayfa bir uygulamanın içinde açıldı, burada seslendirme çalışmaz. ' +
+                'Sağ üstteki <b>⋮</b> menüsünden <b>Chrome\'da aç</b> deyin.';
+            info.className = 'voice-info warn';
+        } else if (!canSpeak) {
             info.textContent = 'Bu tarayıcı seslendirmeyi desteklemiyor.';
             info.className = 'voice-info warn';
         } else if (turkishVoice) {
@@ -689,8 +695,8 @@
             info.className = 'voice-info';
         } else if (voiceCount > 0) {
             info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden başka dilde okunuyor. ' +
-                'Çözüm: Telefon <b>Ayarlar → Metin okuma çıkışı</b> (Erişilebilirlik ya da Dil ve giriş altında) → ' +
-                'Google motorunun ⚙️ ayarı → <b>Ses verilerini yükle</b> → Türkçe\'yi indirin, sonra sayfayı yeniden açın.';
+                'Çözüm: Telefon <b>Ayarlar › Metin okuma çıkışı</b> (Erişilebilirlik ya da Dil ve giriş altında) › ' +
+                'Google motorunun ⚙️ ayarı › <b>Ses verilerini yükle</b> › Türkçe\'yi indirin, sonra sayfayı yeniden açın.';
             info.className = 'voice-info warn';
         } else {
             info.textContent = 'Sesler yükleniyor…';
@@ -713,20 +719,41 @@
         if (canSpeak) speechSynthesis.cancel();
     }
 
-    function speak(text) {
-        if (!canSpeak || !text) return;
-        if (!turkishVoice) pickVoice(); // Android'de ses listesi geç gelebilir
-        const u = new SpeechSynthesisUtterance(text.replace(/-/g, ''));
+    function makeUtterance(text, useVoice) {
+        const u = new SpeechSynthesisUtterance(text);
         u.lang = 'tr-TR';
-        if (turkishVoice) u.voice = turkishVoice;
+        if (useVoice && turkishVoice) u.voice = turkishVoice;
         u.rate = 0.8; // çocuklar için biraz yavaş
-        // Önceki okuma sürüyorsa kesip yenisini başlat
-        if (speechSynthesis.speaking || speechSynthesis.pending) {
-            speechSynthesis.cancel();
-            setTimeout(() => speechSynthesis.speak(u), 120);
-        } else {
-            speechSynthesis.speak(u);
-        }
+        return u;
+    }
+
+    function showSpeakError(msg) {
+        statusMessage.textContent = msg;
+        setTimeout(() => { if (statusMessage.textContent === msg) statusMessage.textContent = ''; }, 6000);
+    }
+
+    function speak(text) {
+        if (!text) return;
+        if (inWebView) { showSpeakError('Seslendirme için sayfayı Chrome\'da açın (⋮ › Chrome\'da aç).'); return; }
+        if (!canSpeak) { showSpeakError('Bu tarayıcı seslendirmeyi desteklemiyor.'); return; }
+        if (!turkishVoice) pickVoice(); // Android'de ses listesi geç gelebilir
+        const clean = text.replace(/-/g, '');
+        const u = makeUtterance(clean, true);
+        let started = false;
+        u.onstart = () => { started = true; };
+        u.onerror = e => {
+            if (e.error === 'interrupted' || e.error === 'canceled') return;
+            // Seçilen ses çalışmadıysa bir kez de sadece dil koduyla dene
+            if (!started && u.voice) {
+                speechSynthesis.speak(makeUtterance(clean, false));
+            } else {
+                showSpeakError('Seslendirilemedi (' + (e.error || 'bilinmeyen hata') + ').');
+            }
+        };
+        // Chrome bazen sesi "duraklatılmış" bırakır; önce temizle, sonra hemen oku
+        speechSynthesis.cancel();
+        speechSynthesis.resume();
+        speechSynthesis.speak(u);
     }
 
     function speakCurrent() {
