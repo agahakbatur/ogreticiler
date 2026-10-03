@@ -1,761 +1,536 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rastgele Kelime Gösterici</title>
-    <style>
-        :root {
-            /* Eski boyut: clamp(2rem, 5vw, 5.5rem) -> %20 büyütüldü */
-            --word-size: clamp(2.4rem, 6vw, 6.6rem);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-            height: 100dvh;
-            padding: 4px;
-            overflow: hidden;
-        }
-
-        .container {
-            background: #ffffff;
-            width: 100%;
-            height: 100%;
-            padding: 8px 8px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #2c3e50;
-        }
-
-        /* ---------- Dosya Seçim Ekranı ---------- */
-        #setup-screen {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            align-items: center;
-            width: 100%;
-            max-width: 800px;
-            margin: 10px 0 auto;
-        }
-
-        #setup-screen h1 { margin-bottom: 0; }
-
-        .file-drop-area {
-            border: 2px dashed #3498db;
-            border-radius: 12px;
-            padding: 28px 20px;
-            width: 100%;
-            background-color: #f8fbfe;
-            cursor: pointer;
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        .file-drop-area:hover {
-            background-color: #ebf5fb;
-            border-color: #2980b9;
-        }
-
-        .file-drop-area p {
-            font-size: 1.1rem;
-            color: #555;
-        }
-
-        /* "ya da" ayırıcı */
-        .or-divider {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            width: 100%;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .or-divider::before,
-        .or-divider::after {
-            content: "";
-            flex: 1;
-            height: 2px;
-            background: #dfe3e8;
-        }
-
-        /* Excel hücresi görünümlü harf tablosu */
-        .letter-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            width: 100%;
-            border-top: 1px solid #c8ccd0;
-            border-left: 1px solid #c8ccd0;
-        }
-
-        .letter-cell {
-            height: 64px;
-            border: none;
-            border-right: 1px solid #c8ccd0;
-            border-bottom: 1px solid #c8ccd0;
-            background: #ffffff;
-            font-family: Arial, sans-serif;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .letter-cell:hover {
-            background: #e8f3ec;
-            outline: 2px solid #217346;
-            outline-offset: -2px;
-        }
-
-        .letter-cell:disabled {
-            color: #c4c8cc;
-            background: #f7f8f9;
-            cursor: not-allowed;
-            outline: none;
-        }
-
-        .letter-cell.empty { cursor: default; }
-        .letter-cell.empty:hover { background: #ffffff; outline: none; }
-
-        /* Dosya seçim penceresi */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(30, 40, 50, 0.45);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .modal-overlay.open { display: flex; }
-
-        .modal {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 22px 26px;
-            width: min(420px, 92vw);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-letter {
-            font-size: 3.2rem;
-            font-weight: bold;
-            color: #1a1a1a;
-            line-height: 1.1;
-        }
-
-        .modal-sub {
-            color: #7f8c8d;
-            margin: 4px 0 16px;
-        }
-
-        .file-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            text-align: left;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .file-option:has(input:checked) {
-            border-color: #3498db;
-            background: #ebf5fb;
-        }
-
-        .file-option input {
-            width: 22px;
-            height: 22px;
-            accent-color: #3498db;
-            cursor: pointer;
-        }
-
-        .file-option .count {
-            margin-left: auto;
-            color: #7f8c8d;
-            font-size: 0.9rem;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 16px;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 28px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s, transform 0.1s;
-        }
-
-        .btn:hover { background-color: #2980b9; }
-        .btn:active { transform: scale(0.98); }
-
-        .btn:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary { background-color: #7f8c8d; }
-        .btn-secondary:hover { background-color: #95a5a6; }
-
-        /* ---------- Gösterim Ekranı ---------- */
-        #presentation-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            flex: 1;
-            min-height: 0;
-        }
-
-        .info-bar {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            font-size: 0.9rem;
-            color: #7f8c8d;
-            min-height: 20px;
-        }
-
-        .status-message {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
-        /* Metin gösterim alanı: yüksekliği yazı boyutuna göre */
-        .word-card {
-            width: 100%;
-            flex-shrink: 0;
-            min-height: calc(var(--word-size) * 1.25 + 40px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 6px 0 12px;
-            background-color: #fafafa;
-            border: 2px solid #e0e0e0;
-            border-radius: 16px;
-            padding: 20px 8px;
-        }
-
-        .word-display {
-            font-family: "Comic Sans MS", "Comic Sans", cursive, sans-serif;
-            font-size: var(--word-size);
-            line-height: 1.25;
-            font-weight: bold;
-            color: #1a1a1a;
-            text-align: center;
-            overflow-wrap: break-word;
-            /* Satır sonunda yalnızca bizim koyduğumuz hece noktalarından bölünür */
-            hyphens: manual;
-            width: 100%;
-            user-select: text;
-            cursor: text;
-        }
-
-        /* Alt bölüm */
-        .lower-area {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            display: flex;
-            gap: 14px;
-        }
-
-        /* Çizim alanı Geri butonuna kadar uzanır */
-        .draw-panel {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .canvas-wrap {
-            flex: 1;
-            min-height: 120px;
-            position: relative;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            background: #ffffff;
-            overflow: hidden;
-        }
-
-        #draw-canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-            cursor: crosshair;
-        }
-
-        /* Alt araç çubuğu */
-        .toolbar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .tool {
-            position: relative;
-        }
-
-        .tool-btn {
-            width: 48px;
-            height: 48px;
-            border: 2px solid #d5d8dc;
-            border-radius: 10px;
-            background: #ffffff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: #2c3e50;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        .tool-btn:hover { background: #f2f4f6; border-color: #3498db; }
-        .tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .tool-btn:disabled:hover { background: #ffffff; border-color: #d5d8dc; }
-
-        .tool-btn svg { width: 26px; height: 26px; }
-
-        /* Kalınlık önizleme çizgisi */
-        .width-preview {
-            width: 30px;
-            background: #2c3e50;
-            border-radius: 20px;
-        }
-
-        /* Renk önizleme dairesi */
-        .color-preview {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: 2px solid rgba(0, 0, 0, 0.15);
-        }
-
-        /* Yukarı açılan araç kutusu */
-        .popup {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 0;
-            background: #ffffff;
-            border: 1px solid #d5d8dc;
-            border-radius: 10px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-            padding: 8px;
-            display: none;
-            gap: 6px;
-            z-index: 20;
-        }
-
-        .popup.open { display: flex; }
-        #width-popup { flex-direction: column; }
-        #color-popup { flex-direction: row; }
-
-        .width-option {
-            width: 80px;
-            height: 38px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            background: #ffffff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .width-option span {
-            width: 50px;
-            background: #2c3e50;
-            border-radius: 20px;
-        }
-
-        .color-option {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 3px solid #ffffff;
-            box-shadow: 0 0 0 1px #d5d8dc;
-            cursor: pointer;
-        }
-
-        .width-option:hover { background: #f2f4f6; }
-        .width-option.selected { border-color: #3498db; background: #ebf5fb; }
-        .color-option.selected { box-shadow: 0 0 0 3px #3498db; }
-
-        /* Geri/İleri: metin alanının altında, sağa dayalı */
-        .nav-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-nav {
-            font-size: 1.1rem;
-            padding: 12px 24px;
-            min-width: 110px;
-        }
-
-        .bottom-extra {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-            width: 100%;
-        }
-
-        /* Heceleme renkleri */
-        .syl-red { color: #e74c3c; }
-
-        /* Sağ sütun: Geri/İleri + heceleme ayarı */
-        .nav-column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-self: flex-start;
-            flex-shrink: 0;
-            width: 240px;
-        }
-
-        .nav-column .btn-nav { flex: 1; min-width: 0; }
-
-        .switch-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            color: #2c3e50;
-            text-align: left;
-            line-height: 1.3;
-            cursor: pointer;
-            user-select: none;
-            transition: opacity 0.2s;
-        }
-
-        /* Etkisiz durumdaki ayar soluk görünür */
-        .switch-row.inactive { opacity: 0.45; }
-
-        .switch-row input { display: none; }
-
-        .switch {
-            position: relative;
-            width: 46px;
-            height: 26px;
-            border-radius: 13px;
-            background: #c8ccd0;
-            transition: background 0.2s;
-            flex-shrink: 0;
-        }
-
-        .switch::after {
-            content: "";
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-            transition: transform 0.2s;
-        }
-
-        .switch-row input:checked + .switch { background: #27ae60; }
-        .switch-row input:checked + .switch::after { transform: translateX(20px); }
-
-        .btn-small {
-            font-size: 0.75rem;
-            padding: 5px 10px;
-        }
-
-        .shortcuts-info {
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            background: #f8f9fa;
-            padding: 5px 10px;
-            border-radius: 6px;
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6f9">
+<title>Okuma Öğretim Yardımcısı</title>
+<!-- Comic Sans benzeri yazı tipi (internet varken yüklenir) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --word-size: clamp(2.4rem, 14vw, 6rem);
+        --red: #e74c3c;
+        --ink: #1a1a1a;
+        --blue: #3498db;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
+
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        color: #333;
+        overflow: hidden;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    button { font-family: inherit; touch-action: manipulation; }
+
+    .screen { display: none; height: 100%; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* ---------- Harf seçim ekranı ---------- */
+    #home-screen {
+        padding: 18px 12px;
+        align-items: center;
+        overflow-y: auto;
+    }
+
+    h1 { font-size: 1.4rem; color: #2c3e50; margin-bottom: 6px; text-align: center; }
+    .hint { color: #7f8c8d; margin-bottom: 16px; }
+
+    .letter-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 100%;
+        max-width: 480px;
+        border-top: 1px solid #c8ccd0;
+        border-left: 1px solid #c8ccd0;
+        background: #fff;
+    }
+
+    .letter-cell {
+        height: 64px;
+        border: none;
+        border-right: 1px solid #c8ccd0;
+        border-bottom: 1px solid #c8ccd0;
+        background: #fff;
+        font-size: 1.9rem;
+        font-weight: bold;
+        color: var(--ink);
+        cursor: pointer;
+    }
+
+    .letter-cell:active { background: #e8f3ec; outline: 2px solid #217346; outline-offset: -2px; }
+    .letter-cell:disabled { color: #c4c8cc; background: #f7f8f9; }
+    .letter-cell.empty { pointer-events: none; }
+
+    .js-warning {
+        width: 100%;
+        max-width: 480px;
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border: 2px solid var(--red);
+        border-radius: 10px;
+        background: #fdecea;
+        color: #922b21;
+        line-height: 1.5;
+        text-align: center;
+    }
+
+    /* ---------- Alt pencere (sheet) ---------- */
+    .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(30, 40, 50, 0.45);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 100;
+    }
+
+    .overlay.open { display: flex; }
+
+    .sheet {
+        background: #fff;
+        width: 100%;
+        max-width: 520px;
+        border-radius: 18px 18px 0 0;
+        padding: 18px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .sheet-title { font-size: 2.6rem; font-weight: bold; color: var(--ink); line-height: 1.1; }
+    .sheet-sub { color: #7f8c8d; margin: 4px 0 14px; }
+
+    .file-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 52px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        user-select: none;
+    }
+
+    .file-option:has(input:checked) { border-color: var(--blue); background: #ebf5fb; }
+    .file-option input { width: 24px; height: 24px; accent-color: var(--blue); }
+    .file-option .count { margin-left: auto; color: #7f8c8d; font-size: 0.95rem; }
+
+    .sheet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #fff;
+        background: var(--blue);
+        cursor: pointer;
+    }
+
+    .btn:active { filter: brightness(0.9); }
+    .btn:disabled { background: #bdc3c7; }
+    .btn-secondary { background: #7f8c8d; }
+
+    /* Ayar anahtarları */
+    .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 56px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: bold;
+        color: #2c3e50;
+        user-select: none;
+        transition: opacity 0.2s;
+    }
+
+    .switch-row.inactive { opacity: 0.45; }
+    .switch-row input { display: none; }
+
+    .switch {
+        position: relative;
+        width: 50px;
+        height: 28px;
+        border-radius: 14px;
+        background: #c8ccd0;
+        flex-shrink: 0;
+        transition: background 0.2s;
+    }
+
+    .switch::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        transition: transform 0.2s;
+    }
+
+    .switch-row input:checked + .switch { background: #27ae60; }
+    .switch-row input:checked + .switch::after { transform: translateX(22px); }
+
+    .syl-red { color: var(--red); }
+
+    .voice-info {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin: -2px 4px 8px;
+        line-height: 1.4;
+    }
+
+    .voice-info.warn { color: #922b21; }
+
+    /* ---------- Gösterim ekranı ---------- */
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+    }
+
+    .icon-btn {
+        height: 44px;
+        min-width: 44px;
+        padding: 0 12px;
+        border: 2px solid #d5d8dc;
+        border-radius: 10px;
+        background: #fff;
+        font-size: 1rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .progress {
+        flex: 1;
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 0.95rem;
+    }
+
+    .progress strong { color: #2c3e50; }
+
+    .word-card {
+        flex: 1;
+        min-height: 0;
+        margin: 0 10px;
+        background: #fff;
+        border: 2px solid #e0e0e0;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 8px;
+        overflow: hidden;
+        touch-action: pan-y;
+        user-select: none;
+    }
+
+    .word-display {
+        width: 100%;
+        font-family: "Comic Sans MS", "Comic Neue", "Comic Sans", sans-serif;
+        font-size: var(--word-size);
+        font-weight: bold;
+        line-height: 1.25;
+        color: var(--ink);
+        text-align: center;
+        overflow-wrap: break-word;
+        hyphens: manual;
+    }
+
+    .status-message {
+        min-height: 26px;
+        padding-top: 4px;
+        text-align: center;
+        color: var(--red);
+        font-weight: bold;
+    }
+
+    /* Geri/İleri %20 küçültüldü; aradaki boşlukta "Oku" butonu */
+    .controls {
+        display: grid;
+        grid-template-columns: 40% 1fr 40%;
+        gap: 10px;
+        padding: 4px 10px 12px;
+        align-items: center;
+    }
+
+    .btn-nav { height: 54px; font-size: 1.1rem; padding: 0 6px; }
+
+    .btn-read {
+        height: 54px;
+        padding: 0;
+        background: #27ae60;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+
+    .btn-read .icon { font-size: 1.3rem; }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Dosya Seçim Ekranı -->
-    <div id="setup-screen">
-        <h1>Rastgele Kelime Gösterici</h1>
-        <p>Lütfen her satırında tek bir kelime/cümle olan .txt dosyanızı seçin.</p>
+<!-- Harf seçim ekranı -->
+<div class="screen active" id="home-screen">
+    <h1>Okuma Öğretim Yardımcısı</h1>
+    <p class="hint">Bir harf seçin</p>
+    <!-- JavaScript çalışmazsa görünen uyarı (çalışınca gizlenir) -->
+    <div class="js-warning" id="js-warning">
+        Bu sayfa, açıldığı uygulamada çalışamıyor.<br>
+        Lütfen dosyayı <strong>Chrome</strong> ile açın:<br>
+        Dosyalar uygulamasında dosyaya uzun basın → ⋮ → <em>Birlikte aç</em> → Chrome.
+    </div>
+    <div class="letter-grid" id="letter-grid">
+        <button class="letter-cell" data-letter="A" disabled>A</button>
+        <button class="letter-cell" data-letter="N" disabled>N</button>
+        <button class="letter-cell" data-letter="E" disabled>E</button>
+        <button class="letter-cell" data-letter="T">T</button>
+        <button class="letter-cell" data-letter="İ">İ</button>
+        <button class="letter-cell" data-letter="L">L</button>
+        <button class="letter-cell" data-letter="O">O</button>
+        <button class="letter-cell" data-letter="K">K</button>
+        <button class="letter-cell" data-letter="U">U</button>
+        <button class="letter-cell" data-letter="R">R</button>
+        <button class="letter-cell" data-letter="I">I</button>
+        <button class="letter-cell" data-letter="M">M</button>
+        <button class="letter-cell" data-letter="Ü">Ü</button>
+        <button class="letter-cell" data-letter="S">S</button>
+        <button class="letter-cell" data-letter="Ö">Ö</button>
+        <button class="letter-cell" data-letter="Y">Y</button>
+        <button class="letter-cell" data-letter="D">D</button>
+        <button class="letter-cell" data-letter="Z">Z</button>
+        <button class="letter-cell" data-letter="Ç">Ç</button>
+        <button class="letter-cell" data-letter="B">B</button>
+        <button class="letter-cell" data-letter="G">G</button>
+        <button class="letter-cell" data-letter="C">C</button>
+        <button class="letter-cell" data-letter="Ş">Ş</button>
+        <button class="letter-cell" data-letter="P">P</button>
+        <button class="letter-cell" data-letter="H">H</button>
+        <button class="letter-cell" data-letter="V">V</button>
+        <button class="letter-cell" data-letter="Ğ">Ğ</button>
+        <button class="letter-cell" data-letter="F">F</button>
+        <button class="letter-cell" data-letter="J">J</button>
+        <div class="letter-cell empty"></div>
+    </div>
+</div>
 
-        <div class="file-drop-area" id="drop-area">
-            <p id="file-name-text">📁 Bir .txt dosyası seçin veya buraya sürükleyin</p>
-            <input type="file" id="file-input" accept=".txt">
-        </div>
-
-        <button id="start-btn" class="btn" disabled>Devam Et</button>
-
-        <div class="or-divider">ya da</div>
-
-        <div class="letter-grid" id="letter-grid"></div>
+<!-- Gösterim ekranı -->
+<div class="screen" id="presentation-screen">
+    <div class="topbar">
+        <button class="icon-btn" id="home-btn">◀ Harfler</button>
+        <div class="progress" id="progress-info"></div>
+        <button class="icon-btn" id="settings-btn" aria-label="Ayarlar">⚙️</button>
     </div>
 
-    <!-- Kelime Gösterim Ekranı -->
-    <div id="presentation-screen">
-        <div class="info-bar">
-            <span id="progress-info">Kelime 0 / 0</span>
-            <span id="status-message" class="status-message"></span>
-        </div>
+    <div class="word-card" id="word-card">
+        <div class="word-display" id="word-display">...</div>
+    </div>
 
-        <div class="word-card">
-            <div id="word-display" class="word-display">...</div>
-        </div>
+    <div class="status-message" id="status-message"></div>
 
-        <div class="lower-area">
-            <div class="draw-panel">
-                <div class="canvas-wrap" id="canvas-wrap">
-                    <canvas id="draw-canvas"></canvas>
-                </div>
+    <div class="controls">
+        <button class="btn btn-secondary btn-nav" id="prev-btn">◀ Geri</button>
+        <button class="btn btn-read" id="read-btn" aria-label="Oku"><span class="icon">🔊</span>Oku</button>
+        <button class="btn btn-nav" id="next-btn">İleri ▶</button>
+    </div>
+</div>
 
-                <div class="toolbar">
-                    <!-- 1. Kalem kalınlığı -->
-                    <div class="tool">
-                        <button class="tool-btn" id="width-btn" title="Kalem kalınlığı">
-                            <span class="width-preview" id="width-preview"></span>
-                        </button>
-                        <div class="popup" id="width-popup"></div>
-                    </div>
-
-                    <!-- 2. Kalem rengi -->
-                    <div class="tool">
-                        <button class="tool-btn" id="color-btn" title="Kalem rengi">
-                            <span class="color-preview" id="color-preview"></span>
-                        </button>
-                        <div class="popup" id="color-popup"></div>
-                    </div>
-
-                    <!-- 3. Temizle -->
-                    <button class="tool-btn" id="clear-btn" title="Temizle">🗑️</button>
-
-                    <!-- 4. Geri al -->
-                    <button class="tool-btn" id="undo-btn" title="Geri al">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
-                    </button>
-
-                    <!-- 5. İleri al -->
-                    <button class="tool-btn" id="redo-btn" title="İleri al">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Kelime gezinme ve heceleme ayarı: sağa dayalı -->
-            <div class="nav-column">
-                <div class="nav-group">
-                    <button id="prev-btn" class="btn btn-nav btn-secondary">◀ Geri</button>
-                    <button id="next-btn" class="btn btn-nav">İleri ▶</button>
-                </div>
-                <label class="switch-row" title="Heceleri siyah/kırmızı göster">
-                    <span>Hecele (A<span class="syl-red">li</span>)</span>
-                    <input type="checkbox" id="syllable-toggle">
-                    <span class="switch"></span>
-                </label>
-                <label class="switch-row" title="Tek satıra sığmayan metnin yazı boyutunu küçült">
-                    <span>Sığmayan cümlede yazıyı küçült</span>
-                    <input type="checkbox" id="shrink-toggle">
-                    <span class="switch"></span>
-                </label>
-                <label class="switch-row" id="split-row" title="Satıra sığmayan kelimeyi hece sınırından böl">
-                    <span>Satır sonuna sığmayan kelimeleri hecesinden böl</span>
-                    <input type="checkbox" id="split-toggle">
-                    <span class="switch"></span>
-                </label>
-            </div>
-        </div>
-
-        <div class="bottom-extra">
-            <button id="reset-btn" class="btn btn-secondary btn-small">Ana Ekrana Dön</button>
-            <span class="shortcuts-info">💡 <strong>Sol Ok</strong> (Geri), <strong>Sağ Ok / Boşluk</strong> (İleri)</span>
+<!-- Dosya seçim penceresi -->
+<div class="overlay" id="file-overlay">
+    <div class="sheet" role="dialog" aria-modal="true">
+        <div class="sheet-title" id="sheet-letter"></div>
+        <div class="sheet-sub">Gösterilecek dosyaları seçin</div>
+        <div id="file-options"></div>
+        <div class="sheet-actions">
+            <button class="btn btn-secondary" id="file-cancel">Vazgeç</button>
+            <button class="btn" id="file-start" disabled>Başla</button>
         </div>
     </div>
 </div>
 
-<!-- Harf dosyaları seçim penceresi -->
-<div class="modal-overlay" id="modal-overlay">
-    <div class="modal" role="dialog" aria-modal="true">
-        <div class="modal-letter" id="modal-letter"></div>
-        <div class="modal-sub">Gösterilecek dosyaları seçin</div>
-        <div id="modal-options"></div>
-        <div class="modal-actions">
-            <button class="btn btn-secondary" id="modal-cancel">Vazgeç</button>
-            <button class="btn" id="modal-start" disabled>Başla</button>
+<!-- Ayarlar penceresi -->
+<div class="overlay" id="settings-overlay">
+    <div class="sheet" role="dialog" aria-modal="true">
+        <div class="sheet-sub" style="font-size:1.1rem;font-weight:bold;color:#2c3e50;margin-top:0">Ayarlar</div>
+        <label class="switch-row">
+            <span>Hecele (A<span class="syl-red">li</span>)</span>
+            <input type="checkbox" id="syllable-toggle">
+            <span class="switch"></span>
+        </label>
+        <label class="switch-row">
+            <span>Sığmayan cümlede yazıyı küçült</span>
+            <input type="checkbox" id="shrink-toggle">
+            <span class="switch"></span>
+        </label>
+        <label class="switch-row" id="split-row">
+            <span>Satır sonuna sığmayan kelimeleri hecesinden böl</span>
+            <input type="checkbox" id="split-toggle">
+            <span class="switch"></span>
+        </label>
+        <label class="switch-row" id="speak-row">
+            <span>Görüntülenen kelimeyi seslendir</span>
+            <input type="checkbox" id="speak-toggle">
+            <span class="switch"></span>
+        </label>
+        <div class="voice-info" id="voice-info"></div>
+        <div class="sheet-actions" style="grid-template-columns:1fr">
+            <button class="btn" id="settings-close">Tamam</button>
         </div>
     </div>
 </div>
 
 <script>
     // ================= Gömülü harf dosyaları =================
-    // Her harf: acik, kapali, uc, kelime, cumle listeleri.
     // Metinler "-" ile hecelenmiş olarak saklanır (ör. "A-li to-pu at.")
     const LETTER_DATA = {"T":{"cumle":["Ta-ne ta-ne at.","An-ne et tat.","A-ta at."],"kapali":["an","at","en","et"],"uc":["nan","tan","nat","tat","nen","ten","net","tet"],"acik":["na","ta","ne","te"],"kelime":["ant","an-ten","at","a-ta","et","net","tan","ta-ne","tan-ta-na","tat","ten","ten-te"]},"İ":{"acik":["na","ta","ne","te","ni","ti"],"uc":["nan","tan","nat","tat","nen","ten","net","tet","nin","tin","nit","tit"],"cumle":["İ-ti-na et.","İ-nat et.","A-ta a-it.","At İ-na-n'a a-it .","İn, a-ni in.","İ-nan, i-ti-na et.","An-ne, İ-na-n'a nin-ni…","E-ti İ-na-n'a at."],"kapali":["an","at","en","et","in","it"],"kelime":["a-it","a-ni","e-ti","in","i-nan","i-nat","i-ta-at","i-ti-na","nin-ni","İ-nan (i-sim)"]},"L":{"acik":["na","ta","la","ne","te","le","ni","ti","li"],"uc":["nan","tan","lan","nat","tat","lat","nal","tal","lal","nen","ten","len","net","tet","let","nel","tel","lel","nin","tin","lin","nit","tit","lit","nil","til","lil"],"cumle":["E-la, La-le el e-le.","A-li ta-ne ta-ne an-lat.","El-li ta-ne at-let al.","An-lat Ta-lat an-lat.","Na-lan, i-lan at.","Al-tan a-ta nal al.","Ta-lat te-le el-le.","A-li te-li i-let.","E-la a-le-ti at.","A-li i-le La-le a-i-le."],"kapali":["an","at","al","en","et","el","in","it","il"],"kelime":["a-i-le","al","a-let","A-li","alt","an-la","an-lat","at-la","at-let","el","E-la","e-le","e-lit","el-le","el-li","el-ti","en-tel","il","i-lan","i-le","i-let","i-le-ti","i-lin-ti","il-la","i-te-le","La-le","nal","ta-lan","ta-ne","ta-ne-li","ta-til","tel","tel-lal","Na-lan","Ta-lat","Al-tan"]},"O":{"acik":["na","ta","la","ne","te","le","ni","ti","li","no","to","lo"],"uc":["nan","tan","lan","nat","tat","lat","nal","tal","lal","nen","ten","len","net","tet","let","nel","tel","lel","nin","tin","lin","nit","tit","lit","nil","til","lil","non","ton","lon","not","tot","lot","nol","tol","lol"],"cumle":["La-le at ot-lat.","O-nat on ol-ta al.","A-ta ot at.","O-nan a-ta at-la.","E-la not al.","On o-to al.","O-nat o-te-le at-la."],"kapali":["an","at","al","en","et","el","in","it","il","on","ot","ol"],"kelime":["a-lo","ne-on","not","no-ta","ol","ol-ta","on","ot","o-tel","ot-la","ot-lat","o-to","ton","ton-ton","O-nan","O-nat"]},"K":{"acik":["na","ta","la","ka","ne","te","le","ke","ni","ti","li","ki","no","to","lo","ko"],"uc":["nan","tan","lan","kan","nat","tat","lat","kat","nal","tal","lal","kal","nak","tak","lak","kak","nen","ten","len","ken","net","tet","let","ket","nel","tel","lel","kel","nek","tek","lek","kek","nin","tin","lin","kin","nit","tit","lit","kit","nil","til","lil","kil","nik","tik","lik","kik","non","ton","lon","kon","not","tot","lot","kot","nol","tol","lol","kol","nok","tok","lok","kok"],"cumle":["E-kin, ka-ka-o al.","Nil, kek al.","Kalk Ke-nan kalk.","Ka-an, tak-la at.","İ-ki ko-li ka-ka-o al.","Ni-l'in to-ka ka-li-te to-ka.","Kel A-li ok at.","Nil, ke-kik kok-la.","Ot-lak-ta i-ki i-nek.","Ka-an, Te-kin kol ko-la."],"kapali":["an","at","al","ak","en","et","el","ek","in","it","il","ik","on","ot","ol","ok"],"kelime":["ak","a-la-ka","an-ket","an-ti-ka","a-tak","a-tik","ek","e-kin","ek-le","e-kol","e-lek","e-nik","e-tek","e-ti-ket","et-ki","le-ke","i-ken","i-ki","ik-na","i-let-ken","i-lik","i-lik-le","ilk","il-kel","i-nek","i-tek-le","ka-i-nat","te-ke","ka-ka-o","ka-la","ka-lan","ka-le","ka-li-te","te-ke","kalk","kal-kan","kan","ko-li","ka-nat","kan-tin","kat","kat-la","kek","ke-kik","kek-lik","kel","kent","ke-ten","kil","ki-lit","ki-lo","kok-la","kol","kol-la","ko-lon","ko-lo-ni","kon","ko-nak","ko-ni","kon-tak","le-ke","lo-kan-ta","na-kil","na-kit","le-ke","na-nik","nok-ta","ok","o-la-nak","ot-lak","ta-ka","tak-la","tak-lak","tak-lit","tak-tik","tank","Ke-nan","Ka-an","a-kil","te-kin","E-kin","Mil"]},"U":{"acik":["na","ta","la","ka","ne","te","le","ke","ni","ti","li","ki","no","to","lo","ko","nu","tu","lu","ku"],"uc":["nan","tan","lan","kan","nat","tat","lat","kat","nal","tal","lal","kal","nak","tak","lak","kak","nen","ten","len","ken","net","tet","let","ket","nel","tel","lel","kel","nek","tek","lek","kek","nin","tin","lin","kin","nit","tit","lit","kit","nil","til","lil","kil","nik","tik","lik","kik","non","ton","lon","kon","not","tot","lot","kot","nol","tol","lol","kol","nok","tok","lok","kok","nun","tun","lun","kun","nut","tut","lut","kut","nul","tul","lul","kul","nuk","tuk","luk","kuk"],"cumle":["Tu-na u-nut-ma o-ku.","Tu-a-na, o kuk-la.","Ut-ku il-ko-ku-lu o-ku.","Kut-lu ke-ki un-la.","Ut-kan e-li-ni tut.","O-ku, o-ku-lu o-ku.","Tu-na ku-tu-nu tut-kal-la."],"kapali":["an","at","al","ak","en","et","el","ek","in","it","il","ik","on","ot","ol","ok","un","ut","ul","uk"],"kelime":["a-na-o-ku-lu","il-ko-kul","ka-nun","ka-nu-ni","ko-ku","kol-tuk","ko-nu","ko-nuk","kuk-la","ku-ku-le-ta","kul","ku-lak","ku-le","kul-lan","kul-luk","kut-la","ku-tu","ku-tu-la","nu-tuk","o-ku","o-kul","o-luk","tut","tu-ta-nak","tut-kal","tut-ku","tut-kun","tu-tuk","tu-tuk-la","u-ka-la","u-lu","un","un-la","u-nut","u-nut-kan","u-tan","Ut-ku","Kut-lu","Ut-kan","Tu-a-na","Tu-na"]},"R":{"acik":["na","ta","la","ka","ra","ne","te","le","ke","re","ni","ti","li","ki","ri","no","to","lo","ko","ro","nu","tu","lu","ku","ru"],"uc":["ran","rat","ral","rak","rar","nar","tar","lar","kar","rar","ren","ret","rel","rek","rer","ner","ter","ler","ker","rer","rin","rit","ril","rik","rir","nir","tir","lir","kir","rir","ron","rot","rol","rok","ror","nor","tor","lor","kor","ror","run","rut","rul","ruk","rur","nur","tur","lur","kur","rur"],"cumle":["Er-kan o-tur.","Ra-na kar-ne-ni a-ra.","E-ren ra-ke-ti al.","O tren, ka-ra renk-li tren.","Nu-ri ki-le-re o-tur.","O-nur e-rik a-ra.","Na-ri-ni tren tu-tar.","O kan-tar i-ri i-ri tar-tar.","İ-ler-le Nu-ri i-ler-le.","Kor-kut tren i-le tur at."],"kapali":["an","at","al","ak","ar","en","et","el","ek","er","in","it","il","ik","ir","on","ot","ol","ok","or","un","ut","ul","uk","ur"],"kelime":["Er-kan","E-ren","Nur","Ra-na","Nu-ri","Na-rin","O-nur","ak-tar","a-la-tur-ka","a-ra","a-ran","ar-ka","art","ek-ran","e-lekt-rik","e-lekt-ro-nik","en-ta-ri","er","e-ren","e-rik","er-kek","er-ken","er-te-le","i-le-ri","i-ler-le","in-kar","i-ri","ka-lo-ri","ka-na-at-kar","kan-tar","kar","ka-ra","ka-ra-kol","ka-rak-ter","ka-rar","ka-ra-te","ka-re","kar-ne","ker-ten-ke-le","ki-ler","kir","ki-ra","kir-li","klor","kont-rol","kor","kork","kor-kak","kor-ku","kor-kut","no-ter","nur","o-nur-lan","o-nur-lu","o-rak","o-ran","or-ta","or-tak","or-ta-o-kul","o-to-ri-te","o-tur","o-tu-rak","ra-ket","ral-li","re-kor","renk","tor-tu","to-run","tren","tri-ko","tur","tu-ra","tur-na","tur-ne","tur-ta","tu-tar"]},"I":{"acik":["na","ta","la","ka","ra","ne","te","le","ke","re","ni","ti","li","ki","ri","no","to","lo","ko","ro","nu","tu","lu","ku","ru","nı","tı","lı","kı","rı"],"uc":["nın","tın","lın","kın","rın","nıt","tıt","lıt","kıt","rıt","nıl","tıl","lıl","kıl","rıl","nık","tık","lık","kık","rık","nır","tır","lır","kır","rır","ran","rat","ral","rak","rar","nar","tar","lar","kar","rar","ren","ret","rel","rek","rer","ner","ter","ler","ker","rer","rin","rit","ril","rik","rir","nir","tir","lir","kir","rir","ron","rot","rol","rok","ror","nor","tor","lor","kor","ror","run","rut","rul","ruk","rur","nur","tur","lur","kur","rur"],"cumle":["I-tır al-tın a-lır.","A-nıl tar-tı i-le tar-tı-lır.","Ta-rık ar-tık ka-lın at-kı tak.","Al-tı ar-tı al-tı on i-ki.","Kırk kı-na-lı tat-lı ka-tır.","Al-tı a-kıl-lı a-rı.","A-kın or-ta-lık ka-ran-lık."],"kapali":["an","at","al","ak","ar","en","et","el","ek","er","in","it","il","ik","ir","on","ot","ol","ok","or","un","ut","ul","uk","ur","ın","ıt","ıl","ık","ır"],"kelime":["A-nıl","A-kın","I-tır","a-kıl","a-kın-tı","a-lın","a-lın-tı","al-lık","al-tı","al-tın","a-nıt","a-rı","ar-tı","ar-tık","ar-tır","at-kı","ı-lık","ı-rak","ırk","ka-lın","ka-nıt","ka-ral-tı","ka-ran-lık","ka-tı","ka-tık","ka-tır","kat-kı","kı-lık","kı-na","kı-na-lı","kır","ki-ra-lık","kırk","kıt","kı-ta","ku-lak-lık","ku-rak-lık","o-ran-tı","or-ta-lık","ta-kı","ta-kın-tı","ta-kır-tı","ta-nı","ta-nık","tar-tı","tar-tıl","tat-lı","tı-ka-lı","tı-kın","tır-nak","tu-tar-lı","Ta-rık"]},"M":{"acik":["na","ta","la","ka","ra","ma","ne","te","le","ke","re","me","ni","ti","li","ki","ri","mi","no","to","lo","ko","ro","mo","nu","tu","lu","ku","ru","mu","nı","tı","lı","kı","rı","mı"],"uc":["man","mat","mal","mak","mar","mam","nam","tam","lam","kam","ram","mam","men","met","mel","mek","mer","mem","nem","tem","lem","kem","rem","mem","min","mit","mil","mik","mir","mim","nim","tim","lim","kim","rim","mim","mon","mot","mol","mok","mor","mom","nom","tom","lom","kom","rom","mom","mun","mut","mul","muk","mur","mum","num","tum","lum","kum","rum","mum","mın","mıt","mıl","mık","mır","mım","nım","tım","lım","kım","rım","mım"],"cumle":["Mert man-to a-ra-ma.","Nu-man man-tık-lı ol.","O lo-kum, on nu-ma-ra lo-kum.","İ-rem kum-ral mı, ka-ra mı?","Li-mo-na-ta li-mon-la o-lur.","U-mut a-lar-mı kur.","Ir-mak mi-mar ol.","Mel-tem, kre-ma al.","Kim ko-mik?","Me-ne-me-ne el-ma ek-le-me."],"kapali":["an","at","al","ak","ar","en","et","el","ek","er","em","in","it","il","ik","ir","im","on","ot","ol","ok","or","om","un","ut","ul","uk","ur","um","ın","ıt","ıl","ık","ır","ım"],"kelime":["Ke-rim","Ir-mak","Nu-man","Ke-mal","Ka-mil","İ-rem","a-kım","ak-la-mak","ak-mak","ak-tar-mak","a-larm","a-lem","a-lim","te-mel","a-me-le","A-me-ri-ka","a-min","a-mir","a-mi-ral","an-lam","a-ra-ma","kum-ral","kum-ru","ku-ram","kur-mak","li-man","li-mit","li-mon","li-mo-na-ta","lok-ma","lo-kum","man-tı","man-tık","man-tık-lı","man-to","me-rak-lı","mer-mer","Mert","E-mel","ek-mek","e-ko-no-mi","e-ko-no-mik","e-le-man","el-ma","e-ma-net","e-mek","e-mek-li","U-mut","E-min","E-mir","i-lim","ı-lı-man","ı-lım-lı","il-mek","il-mik","i-ma-lat","tu-tum","i-mam","i-man","i-mar","im-kan","ta-mam","ka-me-ra","ka-mu","ka-na-mak","kan-mak","ka-rar-na-me","kar-ma","ka-tet-mek","tır-mık","ke-ment","ke-mer","ke-mik","ke-mir","nor-mal","nu-ma-ra"]},"Ü":{"acik":["na","ta","la","ka","ra","ma","ne","te","le","ke","re","me","ni","ti","li","ki","ri","mi","no","to","lo","ko","ro","mo","nu","tu","lu","ku","ru","mu","nı","tı","lı","kı","rı","mı","nü","tü","lü","kü","rü","mü"],"uc":["man","mat","mal","mak","mar","mam","nam","tam","lam","kam","ram","mam","men","met","mel","mek","mer","mem","nem","tem","lem","kem","rem","mem","min","mit","mil","mik","mir","mim","nim","tim","lim","kim","rim","mim","mon","mot","mol","mok","mor","mom","nom","tom","lom","kom","rom","mom","mun","mut","mul","muk","mur","mum","num","tum","lum","kum","rum","mum","mın","mıt","mıl","mık","mır","mım","nım","tım","lım","kım","rım","mım","mün","müt","mül","mük","mür","müm","nüm","tüm","lüm","küm","rüm","müm"],"cumle":["Tü-lin, tü-lü ü-tü-le.","Türk kül-tü-rü mü-kem-mel.","Ti-mur, ar-mut ü-re-tir.","İ-ki kü-rek kül.","Ün-lü Tü-mer tür-kü o-kur.","Tür-lü tür-lü ü-re-tim.","Ü-mit kar-la-rı kü-re."],"kapali":["an","at","al","ak","ar","en","et","el","ek","er","em","in","it","il","ik","ir","im","on","ot","ol","ok","or","om","un","ut","ul","uk","ur","um","ın","ıt","ıl","ık","ır","ım","ün","üt","ül","ük","ür","üm"],"kelime":["Nük-te","Tü-lin","Ti-mur","Üm-ran","Ül-kü","Ü-mit","a-kü","kük-re-mek","kül","kül-lük","kül-tür","kü-me","kü-re","kü-rek","kü-tük","ma-ni-kür","mer-kür","mü-kem-mel","mü-min","müm-kün","nük-te","tü-ken-mek","tü-ke-tim","tü-kür","tül","tü-nek","tü-nel","tü-ne-mek","Türk","tüt","tüt-mek","ül-ke","ü-ni-te","ün-lü","ü-re-tim","ür-kek","ü-tü-le-mek","ü-tü-lü","ürk-mek","ü-rün","ü-tü","ü-tü-le"]},"S":{"acik":["na","ta","la","ka","ra","ma","sa","ne","te","le","ke","re","me","se","ni","ti","li","ki","ri","mi","si","no","to","lo","ko","ro","mo","so","nu","tu","lu","ku","ru","mu","su","nı","tı","lı","kı","rı","mı","sı","nü","tü","lü","kü","rü","mü","sü"],"uc":["las","kas","ras","mas","sas","sen","set","sel","sek","ser","sem","ses","nes","tes","les","kes","res","mes","ses","sin","sit","sil","sir","sim","sis","nis","tis","lis","kis","ris","mis","sis","son","sot","sol","sok","sor","som","sos","nos","tos","los","kos","ros","mos","sos","sun","sut","sul","suk","sur","sum","sus","nus","tus","lus","kus","rus","mus","sus","sın","sıt","sıl","sık","sır","sım","sıs","nıs","tıs","lıs","kıs","rıs","mıs","sıs","sün","süt","sül","sük","sür","süm","süs","nüs","tüs","lüs","küs","rüs","müs","süs"],"cumle":["İs-mim ........................ (ya-zı-nız.)","Kıs-met, Os-man ma-sum.","Se-ma mı-sır is-te.","Se-lin te-ras na-sıl ol-sun?","Me-sut o mo-tor kü-lüs-tür.","Us-ta o mus-luk klas.","Si-nan sa-a-ti as-tı.","Se-lim san-sar kü-mes-te.","So-ner tos-tu-mu ı-sıt.","Süt-lü kek-ten ı-sır-dım."],"kapali":["an","at","al","ak","ar","as","en","et","el","ek","er","em","es","in","it","il","ik","ir","im","is","on","ot","ol","ok","or","om","os","un","ut","ul","uk","ur","um","us","ın","ıt","ıl","ık","ır","ım","ıs","ün","üt","ül","ük","ür","üm","üs"],"kelime":["Kıs-met","Me-sut","Os-man","Se-ma","Se-lin","So-ner","ak-se-su-ar","ak-set","ak-si","ak-sı-rık","al-tüst","a-nım-sa","ar-ka-üs-tü","ars-lan","el-mas","em-sal","en-se","er-te-si","e-sans","e-sa-ret","in-san","i-ris","ı-sı","i-sim","ı-sı-rık","is-ke-le","kıs-men","kıs-rak","kıs-sa","klas","ko-mi-ser","kon-sant-re","ku-sur","kut-sal","kü-lüs-tür","kü-mes","us-ta","üst","kür-sü","küs-kün","mas-kot","ma-sum","Mek-si-ka","mı-sır","mis-ket","mıs-ra","mo-to-sik-let","mus-luk","na-sıl","ni-san","nok-san","or-kest-ra","or-ki-nos","Os-man-lı","rast-lan-tı","re-sul","risk","Rus","sa-at","sa-kal","sa-tı-lık","sa-türn","sa-u-na","sı-rık","sir-ke","skor","smo-kin","so-kak","star","sun-mak","sun-ta","su-num","teks-til","te-mas","te-nis","te-ras"]},"Ö":{"acik":["na","ta","la","ka","ra","ma","sa","ne","te","le","ke","re","me","se","ni","ti","li","ki","ri","mi","si","no","to","lo","ko","ro","mo","so","nu","tu","lu","ku","ru","mu","su","nı","tı","lı","kı","rı","mı","sı","nü","tü","lü","kü","rü","mü","sü","nö","tö","lö","kö","rö","mö","sö"],"uc":["sem","ses","nes","tes","les","kes","res","mes","sin","sit","sil","sir","sim","sis","nis","tis","lis","kis","ris","mis","son","sot","sol","sok","sor","som","sos","nos","tos","los","kos","ros","mos","sun","sut","sul","suk","sur","sum","sus","nus","tus","lus","kus","rus","mus","sın","sıt","sıl","sık","sır","sım","sıs","nıs","tıs","lıs","kıs","rıs","mıs","sün","süt","sül","sük","sür","süm","süs","nüs","tüs","lüs","küs","rüs","müs","sön","söt","söl","sök","sör","söm","sös","nös","tös","lös","kös","rös","mös","sas","nas","ras","mas"],"cumle":["Ö-mer kö-mür-le ı-sıt.","Ma-sa-ya ör-tü ört-sek?","Ö-te-ki ön-lük kö-tü.","Ö-mü-rün ör-tü-sü sö-kük.","Es-ki trak-tör ö-nem-li.","Ök-sü-rük, ak-sı-rık ö-nem-li.","Ö-te-ki tö-ren rö-tar-lı."],"kapali":["an","at","al","ak","ar","as","en","et","el","ek","er","em","es","in","it","il","ik","ir","im","is","on","ot","ol","ok","or","om","os","un","ut","ul","uk","ur","um","us","ın","ıt","ıl","ık","ır","ım","ıs","ün","üt","ül","ük","ür","üm","üs","ön","öt","öl","ök","ör","öm","ös"],"kelime":["Ö-mer","Ö-ner","Ö-mür","ak-tör","a-ma-tör","a-san-sör","kla-sör","kök","kö-le","kö-mür","kör","kö-se","kö-tü","kö-tüm-ser","ma-sör","mo-ni-tör","nan-kör","ök-sür","ök-sü-rük","ö-mür","ön","ö-nem","ö-nem-se-mek","ö-ner","ö-ne-ri","ön-le","ön-lem","ön-lük","ör-mek","ör-nek","örs","ört-mek","ör-tü","öt","ö-te-ki","öt-mek","ö-tü-rü","rö-tar","sö-kük","sök-mek","sö-mür-mek","sön-mek","tö-re","tö-ren","trak-tör","üs-tün-kö-rü"]},"Y":{"acik":["na","ta","la","ka","ra","ma","sa","ya","ne","te","le","ke","re","me","se","ye","ni","ti","li","ki","ri","mi","si","yi","no","to","lo","ko","ro","mo","so","yo","nu","tu","lu","ku","ru","mu","su","yu","nı","tı","lı","kı","rı","mı","sı","yı","nü","tü","lü","kü","rü","mü","sü","yü","nö","tö","lö","kö","rö","mö","sö","yö"],"uc":["yis","yiy","niy","tiy","liy","kiy","riy","miy","siy","yon","yot","yol","yok","yor","yom","yos","yoy","noy","toy","loy","koy","roy","moy","soy","yun","yut","yul","yuk","yur","yum","yus","yuy","nuy","tuy","luy","kuy","ruy","muy","suy","yın","yıt","yıl","yık","yır","yım","yıs","yıy","nıy","tıy","lıy","kıy","rıy","mıy","sıy","yün","yüt","yül","yük","yür","yüm","yüs","yüy","nüy","tüy","lüy","küy","rüy","müy","süy","yön","yöt","yöl","yök","yör","yöm","yös","yöy","nöy","töy","löy","köy","röy","möy","söy","yal","yem","yan","ney","yin"],"cumle":["O-ya o-yun oy-na.","Rü-ya sa-yı say.","Ko-yun-la-rın kuy-ruk-la-rı kı-sa.","Tür-ki-ye, Rus-ya ya-rın oy-na-sın.","Kır-ta-si-ye kö-ye ya-kın.","Öy-kü a-me-li-yat-ta.","Mil-yon ta-ne tüy-lü may-mun.","Kur-ye ku-tu-yu ye-re koy-ma.","Ya-se-min uy-ku u-yu-ma.","Kıy-ma-lı ye-mek ye-rim."],"kapali":["an","at","al","ak","ar","as","ay","en","et","el","ek","er","em","es","ey","in","it","il","ik","ir","im","is","iy","on","ot","ol","ok","or","om","os","oy","un","ut","ul","uk","ur","um","us","uy","ın","ıt","ıl","ık","ır","ım","ıs","ıy","ün","üt","ül","ük","ür","üm","üs","üy","ön","öt","öl","ök","ör","öm","ös","öy"],"kelime":["O-ya","Öy-kü","Ya-sin","Rü-ya","Ya-se-min","a-lay","al-yans","a-me-li-yat","a-na-ya-sa","a-töl-ye","ay","a-yak","a-yar","a-yı","ay-ran","ey-lül","is-tas-yon","is-yan","i-yi","i-yim-ser","kay-nat-mak","kim-ya","kim-yon","kır-ta-si-ye","kıy-ma","ko-yu","ko-yun","köy","kur-ye","kuy-ruk","may-mun","mil-yar","mil-yon","nak-li-yat","ni-ye","ok-ya-nus","o-to-yol","o-yun","öy-le","Ro-man-ya","Rus-ya","sa-na-yi","sa-ray","sa-yı","sey-rek","sey-ret-mek","sı-yır-mak","soy-lu","söy-le-mek","tay","ti-yat-ro","Tok-yo","Tür-ki-ye","tüy-lü","u-yan-mak","u-ya-rı","u-yar-mak","uy-ku","uy-mak","u-yum","u-yum-lu","u-yut-mak","ü-ye","ya-ka","ya-kın","ya-kut","ya-la-mak","ya-ma","ya-muk","ya-nak","ya-ni","ya-nık","yan-kı","ya-ra","ya-rın","yas-tık"]},"D":{"acik":["na","ta","la","ka","ra","ma","sa","ya","da","ne","te","le","ke","re","me","se","ye","de","ni","ti","li","ki","ri","mi","si","yi","di","no","to","lo","ko","ro","mo","so","yo","do","nu","tu","lu","ku","ru","mu","su","yu","du","nı","tı","lı","kı","rı","mı","sı","yı","dı","nü","tü","lü","kü","rü","mü","sü","yü","dü","nö","tö","lö","kö","rö","mö","sö","yö","dö"],"uc":["nad","tad","lad","kad","der","dem","des","dey","ded","don","dot","dol","dok","dor","dom","dos","doy","dod","nod","tod","lod","kod","rod","mod","sod","yod","dod","dun","dut","dul","duk","dur","dum","dus","duy","dud","nud","tud","lud","kud","rud","mud","sud","yud","dud","dın","dıt","dıl","dık","dır","dım","dıs","dıy","dıd","nıd","tıd","lıd","kıd","rıd","mıd","sıd","yıd","dıd","dün","düt","dül","dük","dür","düm","düs","düy","düd","nüd","tüd","lüd","küd","rüd","müd","süd","yüd","düd","dön","döt","dök","dör","döm","dös","döy","död","nöd","töd","löd","köd","röd","möd","söd","yöd","död"],"cumle":["Ka-dir da-rı ye-di.","Se-da ders-tey-di.","Ön-der dik-kat-li ol.","Er-dem i-le En-der dost ol-du.","E-da dü-dük o-ra-da.","De-met, dan-tel dik-ti.","Da-na a-ni-den yü-rü-dü.","Dört min-der sı-ra-da du-ru-yor.","İd-man-da sı-ra-da dur-dum.","Dük-kan ay-dın-lık ol-du."],"kapali":["an","at","al","ak","ar","as","ay","ad","en","et","el","ek","er","em","es","ey","ed","in","it","il","ik","ir","im","is","iy","id","on","ot","ol","ok","or","om","os","oy","od","un","ut","ul","uk","ur","um","us","uy","ud","ın","ıt","ıl","ık","ır","ım","ıs","ıy","ıd","ün","üt","ül","ük","ür","üm","üs","üy","üd","ön","öt","öl","ök","ör","öm","ös","öy","öd"],"kelime":["E-da","En-der","Er-dem","Ka-dir","Kad-ri-ye","Ön-der","Se-da","a-da","a-dak","a-da-let","a-dım","ad-res","a-ni-den","ay-dın-lık","da-dı","da-i-ma","da-i-re","da-ki-ka","dak-ti-lo","da-mak","da-mar","da-mat","da-na","dan-tel","da-rı","de-met","de-ri","ders","dert","di-ken","di-key","dik-kat","dik-mek","di-na-mit","di-rek-si-yon","do-lu-nay","dost","dos-ya","dö-nem","dö-ner","dört","du-rak","duy-mak","dü-dük","i-a-de","id-di-a","id-man","i-kin-di","im-dat","ka-i-de","kay-det-mek","ko-man-do","ko-me-di","kür-dan","li-der","ye-dek","man-da-li-na","men-dil","mı-rıl-dan-mak","min-der","mo-dern","yu-dum","or-du","öd-lek","rad-yo","san-dal","say-dam","sin-di-rim","sı-ra-dan","yıl-dı-rım","stad-yum","stand","stan-dart","te-red-düt","uy-du","ye-di"]},"Z":{"acik":["ta","la","ka","ra","ma","sa","ya","da","za","te","le","ke","re","me","se","ye","de","ze","ti","li","ki","ri","mi","si","yi","di","zi","to","lo","ko","ro","mo","so","yo","do","zo","tu","lu","ku","ru","mu","su","yu","du","zu","tı","lı","kı","rı","mı","sı","yı","dı","zı","tü","lü","kü","rü","mü","sü","yü","dü","zü","tö","lö","kö","rö","mö","sö","yö","dö","zö"],"uc":["zim","zis","ziy","zid","ziz","niz","tiz","liz","kiz","loz","koz","roz","moz","soz","yoz","doz","zoz","zun","zut","zul","zuk","zur","zum","zus","zuy","zud","zuz","nuz","tuz","luz","kuz","ruz","muz","suz","yuz","duz","zuz","zın","zıt","zıl","zık","zır","zım","zıs","zıy","zıd","zız","nız","tız","lız","kız","rız","mız","sız","yız","dız","zız","zün","züt","zül","zük","zür","züm","züs","züy","züd","züz","nüz","tüz","lüz","küz","rüz","müz","süz","yüz","düz","züz","zön","zöt","zöl","zök","zör","zöm","zös","zöy","zöd","zöz","nöz","töz","löz","köz","röz","möz","söz","yöz","döz","zöz","zoz","nez"],"cumle":["Rı-za mü-zik din-le-di.","Öz-lem ki-raz ye-di.","A-ziz kaz-ma i-le ye-ri kaz.","Ar-zu, kaz-lar u-zak-ta kal-dı.","Tey-zem ter-zi-de ka-zak dik-tir-di.","Rem-zi i-ti-raz et-me-di.","E-zan o-kun-du, na-maz kıl-dı.","Se-za-i tuz-luk o-ra-da mı?","O-tuz ke-re ya-zı-lı ol-duk.","Yüz-mek is-te-dim, yüz-düm."],"kapali":["at","al","ak","ar","as","ay","ad","az","et","el","ek","er","em","es","ey","ed","ez","it","il","ik","ir","im","is","iy","id","iz","ot","ol","ok","or","om","os","oy","od","oz","ut","ul","uk","ur","um","us","uy","ud","uz","ıt","ıl","ık","ır","ım","ıs","ıy","ıd","ız","üt","ül","ük","ür","üm","üs","üy","üd","üz","öt","öl","ök","ör","öm","ös","öy","öd","öz"],"kelime":["Öz-de","Öz-lem","Se-za-i","İ-zel","Rem-zi-ye","Ar-zu","A-ziz","Naz-lı","a-rı-za","a-ta-sö-zü","a-zal-mak","a-zim","de-niz","de-ni-zal-tı","de-ni-za-na-sı","di-no-zor","di-zel","do-kuz","dör-düz","düm-düz","dü-zel-mek","dü-zi-ne","er-zak","e-zan","i-ki-yüz-lü","im-kân-sız","im-za","i-ti-raz","ka-rar-sız","ka-zak","kaz-ma","kriz","ki-raz","kı-zak","kı-za-mık","kı-za-rık","kı-zart-ma","kor-ku-suz","ko-za","ku-duz","kur-naz","ku-zey","la-zer","lez-zet","lü-zum-lu","mal-ze-me","man-za-ra","may-da-noz","ma-yo-nez","ma-ze-ret","me-zun","na-zik","nez-le","o-kur-ya-zar","ö-zel","ra-ma-zan","ro-zet","sa-kız","sa-zan","se-mi-zo-tu","son-suz","söz-lük","süz-mek","tarz","te-ra-zi","ter-te-miz","ter-zi","tey-ze","tu-rizm","tuz-luk","u-zak","ya-zı-lı","yüz-mek","yü-zük","mo-loz","mü-zik"]},"Ç":{"acik":["la","ka","ra","ma","sa","ya","da","za","ça","le","ke","re","me","se","ye","de","ze","çe","li","ki","ri","mi","si","yi","di","zi","çi","lo","ko","ro","mo","so","yo","do","zo","ço","lu","ku","ru","mu","su","yu","du","zu","çu","lı","kı","rı","mı","sı","yı","dı","zı","çı","lü","kü","rü","mü","sü","yü","dü","zü","çü","lö","kö","rö","mö","sö","yö","dö","zö","çö"],"uc":["çaz","çaç","naç","taç","laç","kaç","raç","maç","saç","çan","çat","çal","çak","çar","çam","ças","çay","çad","çit","çil","çik","çir","çim","çis","çiy","çid","çiz","çul","çuk","çur","çum","çus","çuy","çud","çuz","çuç","nuç","tuç","luç","kuç","ruç","muç","suç","yuç","duç","zuç","çuç","çın","çıt","çıl","çık","çır","çım","çıs","mıç","yıç","dıç","zıç","çıç","çün","çüt","çül","tüç","lüç","küç","rüç","müç","süç","yüç","düç","züç","çüç","çön","çöt","çöl","çök","çör","çöm","çös","çöy","çöd","çöz","çöç","nöç","töç","löç","köç","röç","möç","söç","yöç","döç","zöç","çöç","deç","zeç","çem"],"cumle":["Çi-çek ke-çi kaç-tı.","De-rin çu-kur, çök-tü.","El-çin, em-lâk-çı-ya \"Ta-mam\" de-di.","De-de-min çi-lek-ler çü-rü-dü.","Çi-si-l'in çi-çek-le-ri aç-tı.","Çe-lik u-çurt-ma-yı u-çur-du.","Çı-na-r'ın süt-laç i-yi çık-tı.","Türk-çe-de ça-re tü-ken-mez.","Ço-ma-r'a ke-mik i-çi al-dım.","Çi-men-ler-de ça-yı-nı iç."],"kapali":["at","al","ak","ar","as","ay","ad","az","aç","et","el","ek","er","es","ey","ed","ez","eç","it","il","ik","ir","is","iy","id","iz","iç","ot","ol","ok","or","os","oy","od","oz","oç","ut","ul","uk","ur","us","uy","ud","uz","uç","ıt","ıl","ık","ır","ıs","ıy","ıd","ız","ıç","üt","ül","ük","ür","üs","üy","üd","üz","üç","öt","öl","ök","ör","ös","öy","öd","öz","öç"],"kelime":["Çi-çek","Çe-lik","Çe-tin","Çı-nar","Çi-sem","Çi-sil","a-çık","a-çık-söz-lü","aç-lık","aç-ma","al-çı","a-maç","ça-dır","ça-kal","ça-kıl","çak-mak","ça-lı","çal-mak","çay","çe-kiç","ça-yır","çek-yat","çil","çi-men","çin-ko","çı-rak","ço-mar","çö-rek","çö-züm","çu-kur","çün-kü","çü-rü-mek","el-çi","em-lâk-çı","et-çil","i-çe-ri","i-çin","i-laç","i-nanç","ka-u-çuk","ka-zanç","ke-çi","kı-lıç","ki-reç","ko-ko-reç","kra-li-çe","ku-laç","kü-çük","maç","Mi-raç","mı-zık-çı","ni-çin","o-ruç","ot-çul","ö-dünç","ölç-mek","re-çel","re-çe-te","saç-ma","sa-yaç","sat-ranç","so-nuç","suç-suz","sürç-mek","sü-reç","süt-laç","tak-lit-çi","tar-çın","tı-kaç","Türk-çe","u-çak","u-çurt-ma","u-tanç","yal-çın","zi-ya-ret-çi"]},"B":{"acik":["ka","ra","ma","sa","ya","da","za","ça","ba","ke","re","me","se","ye","de","ze","çe","be","ki","ri","mi","si","yi","di","zi","çi","bi","ko","ro","mo","so","yo","do","zo","ço","bo","ku","ru","mu","su","yu","du","zu","çu","bu","kı","rı","mı","sı","yı","dı","zı","çı","bı","kü","rü","mü","sü","yü","dü","zü","çü","bü","kö","rö","mö","sö","yö","dö","zö","çö","bö"],"uc":["kib","rib","mib","sib","yib","dib","zib","çib","bib","nub","tub","lub","kub","rub","mub","sub","yub","dub","zub","çub","bub","bın","bıt","bıl","bık","bır","bım","bıs","bıy","bıd","bız","bıç","bıb","nıb","tıb","lıb","kıb","rıb","mıb","sıb","yıb","dıb","zıb","çıb","bıb","bün","büt","bül","bük","bür","büm","büs","büy","büd","büz","büç","büb","nüb","tüb","lüb","küb","rüb","müb","süb","yüb","düb","züb","çüb","büb","bön","böt","böl","bök","bör","böm","bös","böy","böd","böz","böç","böb","nöb","töb","löb","köb","röb","möb","söb","yöb","döb","zöb","çöb","böb","bum","bur","bob","bun","zob"],"cumle":["Eb-ru ba-lık bit-ti.","Ban-yo-da bil-ye-mi kay-bet-tim.","Bu-ket am-bü-lan-sa çık-tı.","Ber-ke bes-bel-li ka-çı-yor.","Ba-bam ba-na bü-yü-teç bul-du.","Bur-sa'-da za-bı-ta çok.","Bu ba-da-na çok ba-sit.","Bül-bül ça-buk-ça uç-tu.","Kab-lo-la-rın i-çi ba-kır.","Ban-do o-to-bü-se bin-di."],"kapali":["at","ak","ar","as","ay","ad","az","aç","ab","et","ek","er","es","ey","ed","ez","eç","eb","it","ik","ir","is","iy","id","iz","iç","ib","ot","ok","or","os","oy","od","oz","oç","ob","ut","uk","ur","us","uy","ud","uz","uç","ub","ıt","ık","ır","ıs","ıy","ıd","ız","ıç","ıb","üt","ük","ür","üs","üy","üd","üz","üç","üb","öt","ök","ör","ös","öy","öd","öz","öç","öb"],"kelime":["Bu-ket","Sab-ri","Ba-nu","Bel-kıs","Be-ren","Ben-nur","Ber-ke","Bes-te","Bur-cu","Ba-bür","Bar-çın","a-ba-küs","a-bar-tı","ab-dest","a-bo-ne","ka-ra-bi-ber","ak-ra-ba","am-bar","am-bü-lans","a-sa-bi","ba-ba","ba-ba-an-ne","ba-da-na","ba-dem","ba-kır","kö-re-be","bak-te-ri","ba-lık","ba-li-na","na-bız","ban-do","ban-ka-ma-tik","ban-yo","ba-rut","ba-sit","za-bı-ta","ba-yan","bay-rak","bay-ram","be-bek","bek-çi","be-le-di-ye","bel-ki","bel-li","bem-be-yaz","ben-zer-lik","ben-zin","kib-rit","be-ton","bi-be-ron","bı-çak","bil-ye","bi-raz","bod-rum","bo-ra-zan","borç","boy-nuz","Bur-sa","bronz","Bu-ket","buz-do-la-bı","bül-bül","büt-çe","bü-yü-teç","ça-buk","çem-ber","ço-ban","o-to-büs","çu-buk","dür-bün","Eb-ru","el-bi-se","i-bik","i-sa-bet","i-ti-bar","ka-ba-rık"]},"G":{"acik":["ra","ma","sa","ya","da","za","ça","ba","ga","re","me","se","ye","de","ze","çe","be","ge","ri","mi","si","yi","di","zi","çi","bi","gi","ro","mo","so","yo","do","zo","ço","bo","go","ru","mu","su","yu","du","zu","çu","bu","gu","rı","mı","sı","yı","dı","zı","çı","bı","gı","rü","mü","sü","yü","dü","zü","çü","bü","gü","rö","mö","sö","yö","dö","zö","çö","bö","gö"],"uc":["kog","rog","mog","yig","dig","gim","gis","bag","gen","guz","guç","gub","gug","nug","tug","lug","kug","rug","mug","sug","yug","dug","zug","çug","bug","gın","gıt","gıl","gık","gır","gım","gıs","gıy","gıd","gız","gıç","gıb","gıg","nıg","tıg","lıg","kıg","rıg","mıg","sıg","yıg","dıg","zıg","çıg","bıg","gün","güt","gül","gük","gür","güm","güs","güy","güd","güz","güç","güb","güg","nüg","tüg","lüg","küg","rüg","müg","süg","yüg","düg","züg","çüg","büg","gön","göl","gök","gör","göm","gös","göy","göd","göz","göç","göb","gög","nög","tög","lög","kög","rög","mög","sög","yög","dög","zög","çög","bög"],"cumle":["Bil-ge ge-miy-le gel-di.","Çe-kir-ge bir sıç-rar, i-ki sıç-rar.","Göz-de ke-di-yi gı-dık-la-dı, ke-di kaç-tı.","Ga-ye ız-ga-ray-la il-gi-len.","Gül-dü-rü gös-te-ri-si gü-zel-di.","Dal-gıç gö-le gir-di.","Ez-gi en-gi-nar ge-ti-ri-yor.","Bu kan-gu-ru ka-çı-yor.","Bu-gün kır-lan-gıç gör-düm.","Duy-gu dar-gın dur-ma."],"kapali":["ar","an","as","ay","ad","az","aç","ab","ag","er","en","es","ey","ed","ez","eç","eb","eg","ir","in","is","iy","id","iz","iç","ib","ig","or","on","os","oy","od","oz","oç","ob","og","ur","un","us","uy","ud","uz","uç","ub","ug","ır","ın","ıs","ıy","ıd","ız","ıç","ıb","ıg","ür","ün","üs","üy","üd","üz","üç","üb","üg","ör","ön","ös","öy","öd","öz","öç","öb","ög"],"kelime":["Bel-gin","Gi-ray","E-ge","Bil-ge","Gü-lay","Nur-gül","Duy-gu","Gam-ze","Ga-ye","Göz-de","a-çık-göz","al-tı-gen","ar-ke-o-log","bay-gın","bel-ge-sel","bey-gir","boz-gun","böl-ge","bu-gün","bul-gur","çal-gı","çe-kin-gen","çe-kir-ge","çen-gel","çıl-gın","çi-lin-gir","dal-ga","dal-gıç","dam-ga","dar-gın","dört-gen","dur-gun","duy-gu","E-ge-men","eg-zoz","en-gi-nar","Ez-gi","ga-ga","ga-lak-si","ga-ran-ti","gar-ga-ra","ge-çit","ge-mi","genç","gı-dık-la-mak","gır-gır","gırt-lak","giy-dir-mek","giz-len-mek","gö-bek","gör-gü","göz-lük","gram","gu-guk","güb-re","gül-dü-rü","gü-lüm-se-mek","gü-lünç","gü-nay-dın","gü-ney-ba-tı","gü-zel","Gü-zi-de","il-gi-len","ız-ga-ra","ka-ra-göz","kay-gan","kan-gu-ru","kır-lan-gıç","kong-re","mag-ma","man-ga","man-gal","mez-git","mi-ting","yö-rün-ge"]},"C":{"acik":["ma","sa","ya","da","za","ça","ba","ga","ca","me","se","ye","de","ze","çe","be","ge","ce","mi","si","yi","di","zi","çi","bi","gi","ci","mo","so","yo","do","zo","ço","bo","go","co","mu","su","yu","du","zu","çu","bu","gu","cu","mı","sı","yı","dı","zı","çı","bı","gı","cı","mü","sü","yü","dü","zü","çü","bü","gü","cü","mö","sö","yö","dö","zö","çö","bö","gö","cö"],"uc":["nuc","tuc","luc","kuc","cut","cul","cuk","cur","cig","zuc","çuc","buc","guc","cuc","cın","cıt","cıl","cık","cır","cım","cıs","cıy","cıd","cız","cıç","cıb","cıg","cıc","nıc","tıc","lıc","kıc","rıc","mıc","sıc","yıc","dıc","zıc","çıc","bıc","gıc","cıc","cün","cüt","cül","cük","cür","cüm","cüs","cüy","cüd","cüz","cüç","cüb","cüg","cüc","nüc","tüc","lüc","küc","rüc","müc","süc","yüc","düc","züc","çüc","büc","güc","cüc","cön","cöt","cöl","cök","cör","cöm","cös","cöy","cöd","cöz","cöç","cöb","cög","cöc","nöc","töc","löc","köc","röc","möc","söc","yöc","döc","zöc","çöc","böc","göc","cöc"],"cumle":["Ce-ren a-ci-len ge-le-cek.","Mi-ni-cik bö-cek, cam-baz bö-cek.","Seç-me-ce li-mon seb-ze-ci-de.","Cu-ma gü-nü Cenk-ler ge-le-cek.","A-ce-le gi-den, e-ce-le gi-der.","Cı-lız bö-cek mi-ni-cik.","Bu in-cir-ci cö-mert bi-ri.","Ce-mal go-cuk giy-di.","A-zı-cık i-çe-cek iç-tim.","Ü-re-ti-ci-nin yü-zü gü-lü-yor."],"kapali":["as","ay","ad","az","aç","ab","ag","ac","em","es","ey","ed","ez","eç","eb","eg","ec","im","is","iy","id","iz","iç","ib","ig","ic","om","os","oy","od","oz","oç","ob","og","oc","um","us","uy","ud","uz","uç","ub","ug","uc","ım","ıs","ıy","ıd","ız","ıç","ıb","ıg","ıc","üm","üs","üy","üd","üz","üç","üb","üg","üc","öm","ös","öy","öd","öz","öç","öb","ög","öc"],"kelime":["Ec-rin","Cey-da","Ce-mal","Cem-re","Ce-mil","Ce-ren","Can-su","a-ca-ba","a-ce-mi","a-cık-mak","a-ci-len","a-ciz","al-man-ca","a-zı-cık","ba-cak","ba-dem-cik","ben-cil","bıl-dır-cın","bil-me-ce","bon-cuk","bö-cek","bü-cür","cam-baz","ca-mi","ca-sus","ce-ket","ce-mi-yet","Cenk","cid-di","cı-lız","cim-nas-tik","cö-mert","cu-ma","cu-mar-te-si","cüm-le","cüz-dan","ça-bu-cak","çek-me-ce","de-re-ce","di-len-ci","ec-za-ne","ga-ze-te-ci","ge-ce-lik","ge-lin-cik","gı-cık","go-cuk","göz-cü","i-cat","i-çe-cek","il-kön-ce","in-cir","ka-rın-ca","kü-çü-cük","Ma-ca-ris-tan","mat-ba-a-cı","mec-bu-ren","mer-ci-mek","mi-ni-cik","ne-ti-ce","nu-ma-ra-cı","o-cak","o-yun-cak","ön-cü","seb-ze-ci","seç-me-ce","sir-ke-ci","su-cuk","tec-rü-be","tu-run-cu","tür-kü-cü","ü-re-ti-ci","ü-züm-cü","yol-cu","yö-ne-ti-ci","zin-cir","zur-na-cı"]},"Ş":{"acik":["sa","ya","da","za","ça","ba","ga","ca","şa","se","ye","de","ze","çe","be","ge","ce","şe","si","yi","di","zi","çi","bi","gi","ci","şi","so","yo","do","zo","ço","bo","go","co","şo","su","yu","du","zu","çu","bu","gu","cu","şu","sı","yı","dı","zı","çı","bı","gı","cı","şı","sü","yü","dü","zü","çü","bü","gü","cü","şü","sö","yö","dö","zö","çö","bö","gö","cö","şö"],"uc":["ruş","muş","suş","yuş","duş","zuş","çuş","buş","guş","cuş","şın","şıt","şıl","şık","şır","şım","şıs","şıy","şıd","şız","şıç","şıb","şıg","şıc","şış","nış","tış","lış","kış","rış","mış","sış","yış","dış","zış","çış","bış","gış","cış","şün","şüt","şül","şük","şür","şüm","şüs","şüy","şüd","şüz","şüç","şüb","şüg","şüc","şüş","nüş","tüş","lüş","küş","rüş","müş","süş","yüş","düş","züş","çüş","büş","güş","cüş","şön","şöt","şöl","şök","şör","şöm","şös","şöy","şöd","şöz","şöç","şöb","şög","şöc","şöş","nöş","töş","löş","köş","röş","möş","söş","yöş","döş","zöş","çöş","böş","göş","cöş"],"cumle":["Şe-nay bu en-ge-li a-şar.","Coş-kun şem-si-ye aç-tı.","Alt-mış ü-şen-geç şe-bek u-yu-yor.","Ge-niş yem-ye-şil kır-lar-da koş.","Si-zin-le ta-nış-mak ne gü-zel.","E-niş-tem çar-şı-da ge-zi-yor.","Ba-rış şor-tu-nu giy-di.","Şa-di şı-rın-gay-la a-şı ol-du.","Diş-çi şe-ker ye-me de-di.","Şük-rü dü-şün-ce di-zi a-cı-dı."],"kapali":["as","ay","ad","az","aç","ab","ag","ac","aş","es","ey","ed","ez","eç","eb","eg","ec","eş","is","iy","id","iz","iç","ib","ig","ic","iş","os","oy","od","oz","oç","ob","og","oc","oş","us","uy","ud","uz","uç","ub","ug","uc","uş","ıs","ıy","ıd","ız","ıç","ıb","ıg","ıc","ış","üs","üy","üd","üz","üç","üb","üg","üc","üş","ös","öy","öd","öz","öç","öb","ög","öc","öş"],"kelime":["Şe-nay","Şen-gül","Şa-di","Şa-zi-ye","Şe-nol","Şük-rü","Şu-le","Şük-ran","a-çı-lış","ak-şam","a-lış-kan-lık","alt-mış","an-laş-mak","ar-ka-daş","aş-çı","a-şı","a-şu-re","a-teş","Ba-rış","Ba-şak","baş-kent","beş-gen","bron-şit","bu-la-şık","coş-ku","Coş-kun","ça-lış-kan","çar-şam-ba","çar-şı","de-mir-baş","diş-çi","dö-şe-me","dü-şey","dü-şün-ce","e-niş-te","ga-loş","ge-niş","gör-me-miş","göz-ya-şı","iş-ba-şı","I-şıl","iş-kem-be","i-yi-leş-mek","kar-ma-şık","keş-kül","ko-nuş-ma-cı","ko-şu-cu","kü-çük-baş","bü-yük-baş","me-şa-le","mu-şam-ba","mü-na-ka-şa","ok-şa-mak","o-ku-muş","sar-ma-şık","se-lam-laş-mak","sır-daş","söz-leş-me","şal-gam","şans-lı","şans-sız","şa-şırt-mak","şe-bek","şem-si-ye","şı-rın-ga","şort","şu-bat","ta-nış-mak","te-be-şir","te-laş","u-la-şım","uz-laş-mak","ü-şen-geç","yem-ye-şil","yüz-ba-şı","zor-laş-mak"]},"P":{"acik":["ya","da","za","ça","ba","ga","ca","şa","pa","ye","de","ze","çe","be","ge","ce","şe","pe","yi","di","zi","çi","bi","gi","ci","şi","pi","yo","do","zo","ço","bo","go","co","şo","po","yu","du","zu","çu","bu","gu","cu","şu","pu","yı","dı","zı","çı","bı","gı","cı","şı","pı","yü","dü","zü","çü","bü","gü","cü","şü","pü","yö","dö","zö","çö","bö","gö","cö","şö","pö"],"uc":["pır","pım","pıs","rup","mup","sup","nup","tup","lup","pıy","pıd","pız","pıç","pıb","pıg","pıc","pış","pıp","nıp","tıp","lıp","kıp","rıp","mıp","sıp","yıp","dıp","zıp","çıp","bıp","gıp","cıp","şıp","pün","püt","pül","pük","pür","püm","püs","püy","püd","püz","püç","püb","püg","püc","püş","püp","nüp","tüp","lüp","küp","rüp","müp","süp","yüp","düp","züp","çüp","büp","güp","cüp","şüp","pön","pöt","pöl","pök","pör","pöm","pös","pöy","pöd","pöz","pöç","pöb","pög","pöc","pöş","pöp","nöp","töp","löp","köp","röp","möp","söp","yöp","döp","zöp","çöp","böp","göp","cöp","şöp"],"cumle":["İ-pek çok pu-an kap-tı.","Pe-lin mek-te-bin ka-pı-sı ka-pa-lı.","Giz-li e-kip-le-rin ba-şı bi-zim Poy-raz.","Se-ra-p'ın ki-tap-la-rı a-ca-yip gü-zel.","Ço-rap-la-rı-nı, pa-buç-la-rı-nı giy.","Pren-ses köp-rü-den geç-ti.","Is-pa-nak yap da yi-ye-lim.","Şap-ka-cı rap-ti-ye is-te-di.","Ga-rip ke-di ür-per-di.","Sin-cap ka-ne-pe-de zıp-lı-yor."],"kapali":["ay","ad","az","aç","ab","ag","ac","aş","ap","ey","ed","ez","eç","eb","eg","ec","eş","ep","iy","id","iz","iç","ib","ig","ic","iş","ip","oy","od","oz","oç","ob","og","oc","oş","op","uy","ud","uz","uç","ub","ug","uc","uş","up","ıy","ıd","ız","ıç","ıb","ıg","ıc","ış","ıp","üy","üd","üz","üç","üb","üg","üc","üş","üp","öy","öd","öz","öç","öb","ög","öc","öş","öp"],"kelime":["Pe-lin","Pı-nar","Po-lat","Poy-raz","Se-rap","Sarp","a-ca-yip","a-dap-tör","ak-rep","a-pa-çık","a-pay-rı","as-pi-rin","baş-par-mak","cips","ça-pak","çap-raz","çarp-ma","çi-pu-ra","ço-rap","dep-rem","dip-lo-ma","di-sip-lin","dü-pe-düz","e-kip","esp-ri","e-şarp","ga-rip","giz-li","grup","im-pa-ra-tor","İ-pek","ıs-pa-nak","is-pat-la-mak","kalp","ka-ne-pe","ke-bap","kırp-mak","ki-tap-çı","ko-part-mak","köp-rü","kramp","le-o-par","mek-tep","o-to-park","pa-buç","pan-car","pa-ra-zit","per-gel","pey-gam-ber","pi-yes","piz-za","plan","port-re","por-te-kiz","prens","pren-ses","priz","prog-ram","pro-te-in","pu-an","rap-ti-ye","sarp","se-bep","se-pet-çi","sin-cap","sü-pür-ge","şap-ka-cı","şem-pan-ze","şu-rup","tör-pü","tramp-len","ür-per-ti-ci","ya-pış-kan","yel-pa-ze","zı-pır","zıp-la-mak"]},"H":{"acik":["da","za","ça","ba","ga","ca","şa","pa","ha","de","ze","çe","be","ge","ce","şe","pe","he","di","zi","çi","bi","gi","ci","şi","pi","hi","do","zo","ço","bo","go","co","şo","po","ho","du","zu","çu","bu","gu","cu","şu","pu","hu","dı","zı","çı","bı","gı","cı","şı","pı","hı","dü","zü","çü","bü","gü","cü","şü","pü","hü","dö","zö","çö","bö","gö","cö","şö","pö","hö"],"uc":["ruh","muh","suh","yuh","duh","zuh","çuh","buh","guh","hıp","hıh","nıh","tıh","lıh","kıh","rıh","mıh","sıh","yıh","dıh","zıh","çıh","bıh","gıh","cıh","şıh","pıh","hün","hüt","hül","hük","hür","hüm","hüs","hüy","hüd","hüz","hüç","hüb","hüg","hüc","hüş","hüp","hüh","nüh","tüh","lüh","küh","rüh","müh","süh","yüh","düh","züh","çüh","büh","güh","cüh","şüh","püh","hön","höt","höl","hök","hör","höm","hös","höy","höd","höz","höç","höb","hög","höc","höş","höp","höh","nöh","töh","löh","köh","röh","möh","söh","yöh","döh","zöh","çöh","böh","göh","cöh","şöh","pöh","hıs","hıy","hıd","hır","hım"],"cumle":["Se-her ha-la-ma he-di-ye ge-tir-di.","İh-ti-yar am-ca mer-ha-ba de-di.","Ön-ce ilk-ba-har, son-ra son-ba-har.","Meh-met-çik cep-he-de nö-bet-te.","Hem-şi-re çok hoş-gö-rü-lü bi-ri.","Han-gi si-yah hal-ka da-ha kü-çük?","Ha-lı-la-rı bah-çe-de hal-let-tik.","Ta-hıl-la-rı ha-sat et-tik.","Ah-şap seh-pa düş-tü.","Tah-sin bah-şi-şi hak et-ti."],"kapali":["ad","az","aç","ab","ag","ac","aş","ap","ah","ed","ez","eç","eb","eg","ec","eş","ep","eh","id","iz","iç","ib","ig","ic","iş","ip","ih","od","oz","oç","ob","og","oc","oş","op","oh","ud","uz","uç","ub","ug","uc","uş","up","uh","ıd","ız","ıç","ıb","ıg","ıc","ış","ıp","ıh","üd","üz","üç","üb","üg","üc","üş","üp","üh","öd","öz","öç","öb","ög","öc","öş","öp","öh"],"kelime":["Ha-li-me","Ha-ti-ce","Ha-kan","Hü-se-yin","Ha-lis","Ham-za","Hül-ya","Ha-li-me","ah-bap","a-hır","a-hi-ze","ah-lâk","ah-şap","ah-ta-pot","a-nah-tar","Ba-har","bah-çe","bah-şiş","cep-he","ci-haz","cum-hu-ri-yet","çay-ha-ne","der-hal","ha-ber-ci","ha-dis","han-gi-si","hap-şır-mak","ha-zi-ne","he-di-ye","he-li-kop-ter","hem-şi-re","his-set-mek","hız-lan-mak","hoş-gö-rü","hur-da-cı","hü-kü-met","hü-zün-len-mek","ıh-la-mur","ih-ti-yar","ilk-ba-har","kah-ka-ha","lah-ma-cun","meh-met-çik","mer-ha-ba","mih-rap","mu-hab-bet","mu-hal-le-bi","muh-te-şem","müt-hiş","Ne-hir","pa-di-şah","pan-ze-hir","reh-ber","sa-hi-den mi","Se-her","seh-pa","Se-mih","Sey-han","sıh-hat","si-hir-baz","sim-si-yah","son-ba-har","sulh","şa-hin","şeh-la","şöh-ret-li","şüp-he","ta-ham-mül","ta-hıl","ten-ha","ter-cih","tes-pih","tim-sah","zah-met-li","zi-hin"]},"V":{"acik":["za","ça","ba","ga","ca","şa","pa","ha","va","ze","çe","be","ge","ce","şe","pe","he","ve","zi","çi","bi","gi","ci","şi","pi","hi","vi","zo","ço","bo","go","co","şo","po","ho","vo","zu","çu","bu","gu","cu","şu","pu","hu","vu","zı","çı","bı","gı","cı","şı","pı","hı","vı","zü","çü","bü","gü","cü","şü","pü","hü","vü","zö","çö","bö","gö","cö","şö","pö","hö","vö"],"uc":["cuv","şuv","puv","huv","vın","vıt","vıl","vık","vır","mıv","sıv","yıv","dıv","zıv","çıv","bıv","gıv","cıv","şıv","pıv","hıv","vün","vüt","vül","vük","vür","vüm","vüs","vüy","vüd","vüz","vüç","vüb","vüg","vüc","vüş","vüp","vüh","vüv","nüv","tüv","lüv","küv","rüv","müv","süv","yüv","düv","züv","çüv","büv","güv","cüv","şüv","püv","hüv","vön","vöt","völ","vök","vör","vöm","vös","vöy","vöd","vöz","vöç","vöb","vög","vöc","vöş","vöp","vöh","vöv","növ","töv","löv","köv","röv","möv","söv","yöv","döv","zöv","çöv","böv","göv","cöv","şöv","pöv","höv","vıp","vıh","vıv","lıv","kıv","rıv","vıc"],"cumle":["Sev-gi ab-la gev-rek se-ver.","Ha-va-da gü-ver-cin gör-düm.","Hay-van-la-ra ye-mek ver-mek se-vap.","Tav-şan ha-vuç se-ver.","Öv-gü-ler Va-cit a-bi-ye git-ti.","Gö-re-vi-mi yap-tım, e-vi-me git-tim.","Ey-vah! Hav-lu ye-re düş-tü.","Te-da-vi-si re-vir-de ya-pıl-dı.","A-vi-ze-yi ta-va-na as-tık.","Va-hap ay-va-yı ba-na ver-di."],"kapali":["az","aç","ab","ag","ac","aş","ap","ah","av","ez","eç","eb","eg","ec","eş","ep","eh","ev","iz","iç","ib","ig","ic","iş","ip","ih","iv","oz","oç","ob","og","oc","oş","op","oh","ov","uz","uç","ub","ug","uc","uş","up","uh","uv","ız","ıç","ıb","ıg","ıc","ış","ıp","ıh","ıv","üz","üç","üb","üg","üc","üş","üp","üh","üv","öz","öç","öb","ög","öc","öş","öp","öh","öv"],"kelime":["Vil-dan","Va-hi-de","Ve-dat","Vu-ral","Va-cit","Va-hap","A-lev","ak-var-yum","ar-şiv","a-vi-ze","Av-ru-pa","a-vuç","ay-va","bah-çı-van","baş-vur-mak","be-da-va","cet-vel","cev-her","civ-civ","çer-çe-ve","çe-vir-mek","çu-val","da-vet","de-ve","dö-viz","du-var","e-vet","ev-ham-lı","ev-vel","ey-vah","gev-rek","gö-rev","göv-de","gü-ver-cin","ha-ci-vat","ha-vuç","hel-va","tav-si-ye","is-tav-rit","kah-val-tı","kah-ve-ci","kart-vi-zit","ka-va-noz","kav-şak","ke-re-viz","kı-vanç","kı-vır-cık","kon-ser-ve","kra-vat","lev-ha","mah-vet-mek","mas-ma-vi","mev-sim","mev-zu","mü-cev-her","mü-şa-vir","Nev-şe-hir","Nev-zat","Nor-veç","te-da-vi","öv-gü","ö-vünç","pa-çav-ra","per-va-ne","pi-lav","sand-viç","sa-vaş","se-rü-ven","se-vap","Sev-gi","Se-vinç","sı-nav","söy-lev","şa-dır-van","ta-va","ta-vır"]},"Ğ":{"acik":["ça","ba","ga","ca","şa","pa","ha","va","ğa","çe","be","ge","ce","şe","pe","he","ve","ğe","çi","bi","gi","ci","şi","pi","hi","vi","ği","ço","bo","go","co","şo","po","ho","vo","ğo","çu","bu","gu","cu","şu","pu","hu","vu","ğu","çı","bı","gı","cı","şı","pı","hı","vı","ğı","çü","bü","gü","cü","şü","pü","hü","vü","ğü","çö","bö","gö","cö","şö","pö","hö","vö","ğö"],"uc":["ğıc","ğış","ğıp","ğıh","ğıv","ğığ","nığ","tığ","lığ","kığ","rığ","mığ","sığ","yığ","dığ","zığ","çığ","bığ","gığ","cığ","şığ","pığ","hığ","vığ","ğün","ğüt","ğül","ğük","ğür","ğüm","ğüs","ğüy","ğüd","ğüz","ğüç","ğüb","ğüg","ğüc","ğüş","ğüp","ğüh","ğüv","ğüğ","nüğ","tüğ","lüğ","küğ","rüğ","müğ","süğ","yüğ","düğ","züğ","çüğ","büğ","güğ","cüğ","şüğ","püğ","hüğ","vüğ","ğön","ğöt","ğöl","ğök","ğör","ğöm","ğös","ğöy","ğöd","ğöz","ğöç","ğöb","ğög","ğöc","ğöş","ğöp","ğöh","ğöv","ğöğ","nöğ","töğ","löğ","köğ","röğ","möğ","söğ","yöğ","döğ","zöğ","çöğ","böğ","göğ","cöğ","şöğ","pöğ","höğ","vöğ"],"cumle":["Yağ-mu-ra ar-ma-ğan al-dım.","Zey-tin-ya-ğı da-ha sağ-lık-lı.","Ha-va-da de-ği-şik bir ko-ku var.","Gü-ğüm-de-ki yo-ğur-du ya-yı-ğa koy.","E-ği-tim-le di-ğer-le-ri-ni ye-ne-ce-ğiz.","Kâ-ğıt a-ğaç-tan ya-pı-lır.","A-ğa-cın ço-ğu-lu a-ğaç-lar.","Öğ-len ha-va ya-ğış-lı ol-du.","Yi-ğit tav-la-da mağ-lup.","Va-na-nın ka-pa-ğı e-ğik."],"kapali":["aç","ab","ag","ac","aş","ap","ah","av","ağ","eç","eb","eg","ec","eş","ep","eh","ev","eğ","iç","ib","ig","ic","iş","ip","ih","iv","iğ","oç","ob","og","oc","oş","op","oh","ov","oğ","uç","ub","ug","uc","uş","up","uh","uv","uğ","ıç","ıb","ıg","ıc","ış","ıp","ıh","ıv","ığ","üç","üb","üg","üc","üş","üp","üh","üv","üğ","öç","öb","ög","öc","öş","öp","öh","öv","öğ"],"kelime":["Yağ-mur","Ay-tuğ","Al-tuğ","Tuğ-ra","Buğ-ra","O-ğuz","Yi-ğit","Er-tuğ-rul","a-ğaç","a-ğır-lık","a-ğıt","a-ğız","ak-ci-ğer","ar-ma-ğan","ba-ğır-sak","ba-ya-ğı","be-ğen-mek","be-yoğ-lu","ci-ğer","çağ-daş","çiğ-dem","ço-ğul","dar-ma-da-ğın","de-ğir-men","de-ği-şik","do-ğal","do-ğa-üs-tü","do-ğum-ha-ne","dos-doğ-ru","dü-ğüm","e-ğik","e-ğim","e-ğit-men","gü-ğüm","iğ-ne","iğ-renç","kâ-ğıt","kur-ba-ğa","mağ-lu-bi-yet","Mo-ğo-lis-tan","na-mağ-lup","Niğ-de","öğ-le","öğ-ren-ci","ör-ne-ğin","pa-pa-ğan","pis-bo-ğaz","rağ-bet","sağ-dıç","say-gı-de-ğer","sığ-dır-mak","sı-ğı-nak","so-ğan","so-ğu-tu-cu","sop-so-ğuk","sö-ğüş","teğ-men","tos-ba-ğa","uğ-raş-mak","viş-ne-çü-rü-ğü","ya-ğış-lı","ya-nar-dağ","ye-ğen","yo-ğur-mak","yo-ğurt-çu","zey-tin-ya-ğı","zü-ğürt"]},"F":{"acik":["ba","ga","ca","şa","pa","ha","va","ğa","fa","be","ge","ce","şe","pe","he","ve","ğe","fe","bi","gi","ci","şi","pi","hi","vi","ği","fi","bo","go","co","şo","po","ho","vo","ğo","fo","bu","gu","cu","şu","pu","hu","vu","ğu","fu","bı","gı","cı","şı","pı","hı","vı","ğı","fı","bü","gü","cü","şü","pü","hü","vü","ğü","fü","bö","gö","cö","şö","pö","hö","vö","ğö","fö"],"uc":["fıg","fıc","fış","fıp","fıh","fıv","fığ","fıf","nıf","çıf","bıf","gıf","cıf","şıf","pıf","hıf","vıf","ğıf","fün","füt","fül","fük","für","füm","füs","füy","füd","füz","füç","füb","füg","füc","füş","füp","füh","füv","füğ","füf","nüf","tüf","lüf","küf","rüf","müf","süf","yüf","düf","züf","çüf","büf","güf","cüf","şüf","püf","hüf","vüf","ğüf","fön","föt","föl","fök","för","föm","fös","föy","föd","föz","föç","föb","fög","föc","föş","föp","föh","föv","föğ","föf","nöf","töf","löf","köf","röf","möf","söf","yöf","döf","zöf","çöf","böf","göf","cöf","şöf","pöf","höf","vöf","ğöf","dıf","zıf"],"cumle":["Fah-ri a-bi bi-ze zarf ge-tir-di.","Fi-gen, \"F\" har-fi al-fa-be-nin har-fi.","Bü-fe-nin fa-yans-la-rı te-miz.","Fik-ret faz-la ho-şaf iç-ti.","Def-ne i-le Fa-ti-h'in va-zi-fe-si var.","Fab-ri-ka-nın sa-hi-bi Eş-ref.","A-rif bir fin-can kah-ve iç.","Ful-ya bu çar-şaf ha-fif.","Fe-ri-bot faz-la a-ğır.","Buğ-ra, Fah-ri'-yi ağ-lat-tı."],"kapali":["ab","ag","ac","aş","ap","ah","av","ağ","af","eb","eg","ec","eş","ep","eh","ev","eğ","ef","ib","ig","ic","iş","ip","ih","iv","iğ","if","ob","og","oc","oş","op","oh","ov","oğ","of","ub","ug","uc","uş","up","uh","uv","uğ","uf","ıb","ıg","ıc","ış","ıp","ıh","ıv","ığ","ıf","üb","üg","üc","üş","üp","üh","üv","üğ","üf","öb","ög","öc","öş","öp","öh","öv","öğ","öf"],"kelime":["Fat-ma","Fir-devs","Fi-ru-ze","Ful-ya","Fik-ret","Fu-at","Fur-kan","A-kif","a-fa-can","a-fe-rin","ak-tif","al-fa-be","A-rif","as-falt","at-mos-fer","ber-ta-raf","blöf","bü-fe","coğ-raf-ya","çar-şaf","çift-çi","de-fans","Def-ne","e-fen-di","ef-sa-ne","e-şof-man","Eş-ref","fab-ri-ka","fab-ri-ka-tör","Fah-ri","fa-na-tik","fa-raş","Fa-tih","fa-yans","faz-la","fe-da-kâr","fe-rah-la-mak","fe-ri-bot","fer-mu-ar","Fi-gen","Fi-liz","fin-can","fın-dık","flüt","for-vet","fo-toğ-raf","fren","gof-ret","golf","gra-fik","gra-mo-fon","grey-furt","ha-fif","ha-fız","harf","he-def","ho-şaf","i-fa-de","is-raf","it-fa-i-ye","it-ti-fak","ka-lo-ri-fer","ku-a-för","me-ga-fon","mu-vaf-fak","mu-zaf-fer","örf","pa-rag-raf","sif-tah","tra-fo","valf","va-zi-fe","zarf","zü-ra-fa","zift","zi-ya-fet"]},"J":{"acik":["ga","ca","şa","pa","ha","va","ğa","fa","ja","ge","ce","şe","pe","he","ve","ğe","fe","je","gi","ci","şi","pi","hi","vi","ği","fi","ji","go","co","şo","po","ho","vo","ğo","fo","jo","gu","cu","şu","pu","hu","vu","ğu","fu","ju","gı","cı","şı","pı","hı","vı","ğı","fı","jı","gü","cü","şü","pü","hü","vü","ğü","fü","jü","gö","cö","şö","pö","hö","vö","ğö","fö","jö"],"uc":["kıj","rıj","mıj","sıj","yıj","dıj","zıj","çıj","bıj","jün","jüt","jül","jük","jür","jüm","jüs","jüy","jüd","jüz","jüç","jüb","jüg","jüc","jüş","jüp","jüh","jüv","jüğ","jüf","jüj","nüj","tüj","lüj","küj","rüj","müj","süj","yüj","düj","züj","çüj","büj","güj","cüj","şüj","püj","hüj","vüj","ğüj","füj","jüj","jön","jöt","jöl","jök","jör","jöm","jös","jöy","jöd","jöz","jöç","jöb","jög","jöc","jöş","jöp","jöh","jöv","jöğ","jöf","jöj","nöj","töj","löj","köj","röj","möj","söj","yöj","döj","zöj","çöj","böj","göj","cöj","şöj","pöj","höj","vöj","ğöj","föj","jöj","gıj","cıj","hıj","vıj","jıj"],"cumle":["Ja-le te-le-fo-nun şar-jı bit-miş.","Müj-dat a-ra-cın jan-tı ne-re-de?","Ja-gu-ar vi-raj-da pa-ti-naj yap-tı.","İt-fa-i-ye-ci-ler jim-nas-tik ya-pı-yor.","Je-ne-ra-tör bi-ze e-ner-ji ve-rir.","E-lekt-rik ba-raj-dan ge-lir.","Pro-je-nin ka-ğı-dı gü-zel.","Ga-ra-jın pan-ju-ru a-çık.","Aj-da mak-yaj yap-mış.","Tan-ju'-dan me-saj var."],"kapali":["ag","ac","aş","ap","ah","av","ağ","af","aj","eg","ec","eş","ep","eh","ev","eğ","ef","ej","ig","ic","iş","ip","ih","iv","iğ","if","ij","og","oc","oş","op","oh","ov","oğ","of","oj","ug","uc","uş","up","uh","uv","uğ","uf","uj","ıg","ıc","ış","ıp","ıh","ıv","ığ","ıf","ıj","üg","üc","üş","üp","üh","üv","üğ","üf","üj","ög","öc","öş","öp","öh","öv","öğ","öf","öj"],"kelime":["Ja-le","Aj-da","Jü-li-de","Müj-dat","Tan-ju","a-ba-jur","a-jan-da","a-jans","a-ler-ji","am-ba-laj","ba-gaj","ba-raj","bi-yo-lo-ji","de-şarj","de-ter-jan","di-ji-tal","dra-je","ej-der-ha","e-ner-ji","en-jek-si-yon","ga-raj","hid-ro-jen","i-maj","ja-gu-ar","jam-bon","jan-dar-ma","jant","je-ne-ra-tör","je-ton","ji-let","jü-pi-ter","ko-lej","loj-man","mak-yaj","me-saj","met-raj","müj-de","Ni-jer-ya","ob-je","o-je","ok-si-jen","pan-jur","pa-saj","plaj","pro-je","psi-ko-lo-ji","son-daj","şarj","tek-no-lo-ji","vi-raj","vol-taj"]}};
 
-    // ================= DOM Elemanları =================
-    const setupScreen = document.getElementById('setup-screen');
-    const presentationScreen = document.getElementById('presentation-screen');
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('file-input');
-    const fileNameText = document.getElementById('file-name-text');
-    const startBtn = document.getElementById('start-btn');
-    const wordDisplay = document.getElementById('word-display');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const statusMessage = document.getElementById('status-message');
-    const progressInfo = document.getElementById('progress-info');
-    const resetBtn = document.getElementById('reset-btn');
+    const LETTERS = ['A','N','E','T','İ','L','O','K','U','R','I','M','Ü','S','Ö','Y','D','Z','Ç','B','G','C','Ş','P','H','V','Ğ','F','J'];
+    const FILE_TYPES = [
+        { key: 'acik',   label: 'Açık heceler' },
+        { key: 'kapali', label: 'Kapalı heceler' },
+        { key: 'uc',     label: 'Üç harfli heceler' },
+        { key: 'kelime', label: 'Kelimeler' },
+        { key: 'cumle',  label: 'Cümleler' }
+    ];
+    const GRID_COLS = 5;
+    const SOFT_HYPHEN = '\u00AD';
 
-    // ================= Uygulama Durumu =================
-    let rawWords = [];
+    const $ = id => document.getElementById(id);
+    const homeScreen = $('home-screen');
+    const presentationScreen = $('presentation-screen');
+    const letterGrid = $('letter-grid');
+    const fileOverlay = $('file-overlay');
+    const fileOptions = $('file-options');
+    const fileStart = $('file-start');
+    const settingsOverlay = $('settings-overlay');
+    const wordDisplay = $('word-display');
+    const wordCard = $('word-card');
+    const progressInfo = $('progress-info');
+    const statusMessage = $('status-message');
+    const prevBtn = $('prev-btn');
+    const nextBtn = $('next-btn');
+    const syllableToggle = $('syllable-toggle');
+    const shrinkToggle = $('shrink-toggle');
+    const splitToggle = $('split-toggle');
+    const splitRow = $('split-row');
+
+    let selectedLetter = null;
+    let activeLetter = null;
     let shuffledWords = [];
     let currentIndex = 0;
+    let historyPushed = false;
 
-    // ================= Dosya Seçme =================
-    dropArea.addEventListener('click', () => fileInput.click());
+    // JavaScript çalışıyor: uyarıyı gizle
+    $('js-warning').style.display = 'none';
 
-    dropArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropArea.style.borderColor = '#2980b9';
-        dropArea.style.backgroundColor = '#ebf5fb';
-    });
-
-    dropArea.addEventListener('dragleave', () => {
-        dropArea.style.borderColor = '#3498db';
-        dropArea.style.backgroundColor = '#f8fbfe';
-    });
-
-    dropArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropArea.style.borderColor = '#3498db';
-        dropArea.style.backgroundColor = '#f8fbfe';
-        if (e.dataTransfer.files.length > 0) {
-            fileInput.files = e.dataTransfer.files;
-            handleFileSelect();
+    // ================= Harf tablosu =================
+    // Tablo HTML içinde hazır; burada sadece dokunma olayları bağlanır
+    letterGrid.querySelectorAll('button[data-letter]').forEach(cell => {
+        const letter = cell.dataset.letter;
+        if (LETTER_DATA[letter]) {
+            cell.disabled = false;
+            cell.addEventListener('click', () => openFileSheet(letter));
+        } else {
+            cell.disabled = true; // A, N, E
         }
     });
 
-    fileInput.addEventListener('change', handleFileSelect);
-
-    function handleFileSelect() {
-        const file = fileInput.files[0];
-        if (file) {
-            if (file.name.endsWith('.txt')) {
-                fileNameText.textContent = `📄 Seçilen Dosya: ${file.name}`;
-                startBtn.disabled = false;
-            } else {
-                alert('Lütfen geçerli bir .txt dosyası seçin!');
-                fileInput.value = '';
-                startBtn.disabled = true;
-                fileNameText.textContent = '📁 Bir .txt dosyası seçin veya buraya sürükleyin';
-            }
-        }
+    // ================= Dosya seçim penceresi =================
+    function openFileSheet(letter) {
+        selectedLetter = letter;
+        $('sheet-letter').textContent = letter;
+        fileOptions.innerHTML = '';
+        FILE_TYPES.forEach(ft => {
+            const label = document.createElement('label');
+            label.className = 'file-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = ft.key;
+            cb.addEventListener('change', updateFileStart);
+            const name = document.createElement('span');
+            name.textContent = ft.label;
+            const count = document.createElement('span');
+            count.className = 'count';
+            count.textContent = LETTER_DATA[letter][ft.key].length;
+            label.append(cb, name, count);
+            fileOptions.appendChild(label);
+        });
+        updateFileStart();
+        fileOverlay.classList.add('open');
     }
 
-    startBtn.addEventListener('click', () => {
-        const file = fileInput.files[0];
-        if (!file) return;
+    function updateFileStart() {
+        fileStart.disabled = fileOptions.querySelectorAll('input:checked').length === 0;
+    }
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const buffer = e.target.result;
-            let text = "";
+    $('file-cancel').addEventListener('click', () => fileOverlay.classList.remove('open'));
+    fileOverlay.addEventListener('click', e => { if (e.target === fileOverlay) fileOverlay.classList.remove('open'); });
 
-            // Önce UTF-8, hata verirse Windows-1254 (Türkçe ANSI)
-            try {
-                const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
-                text = utf8Decoder.decode(buffer);
-            } catch (err) {
-                const turkishDecoder = new TextDecoder('windows-1254');
-                text = turkishDecoder.decode(buffer);
-            }
-
-            rawWords = text.split(/\r?\n/)
-                           .map(word => word.trim())
-                           .filter(word => word.length > 0)
-                           .map(line => line.includes('-') ? line : hecele(line)); // içinde "-" yoksa otomatik hecele
-
-            if (rawWords.length === 0) {
-                alert('Seçilen dosyada gösterilecek kelime bulunamadı!');
-                return;
-            }
-
-            startPresentation();
-        };
-
-        reader.readAsArrayBuffer(file);
+    fileStart.addEventListener('click', () => {
+        const keys = [...fileOptions.querySelectorAll('input:checked')].map(cb => cb.value);
+        const words = keys.flatMap(k => LETTER_DATA[selectedLetter][k]);
+        if (!words.length) return;
+        fileOverlay.classList.remove('open');
+        startPresentation(selectedLetter, words);
     });
 
     // ================= Gösterim =================
-    function startPresentation() {
-        shuffledWords = [...rawWords];
+    function startPresentation(letter, words) {
+        activeLetter = letter;
+        shuffledWords = [...words];
         shuffleArray(shuffledWords);
         currentIndex = 0;
 
-        setupScreen.style.display = 'none';
-        presentationScreen.style.display = 'flex';
+        homeScreen.classList.remove('active');
+        presentationScreen.classList.add('active');
+
+        // Telefonun geri tuşu harf ekranına dönsün
+        try { history.pushState({ p: 1 }, ''); historyPushed = true; } catch (e) { historyPushed = false; }
 
         updateDisplay();
     }
 
-    // Fisher-Yates karıştırma
+    function showHome() {
+        stopSpeaking();
+        settingsOverlay.classList.remove('open');
+        presentationScreen.classList.remove('active');
+        homeScreen.classList.add('active');
+    }
+
+    $('home-btn').addEventListener('click', () => {
+        if (historyPushed) history.back(); else showHome();
+    });
+
+    window.addEventListener('popstate', () => {
+        historyPushed = false;
+        if (presentationScreen.classList.contains('active')) showHome();
+    });
+
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -771,61 +546,52 @@
             wordDisplay.textContent = '---';
             wordDisplay.style.fontSize = '';
             wordDisplay.style.whiteSpace = '';
-            statusMessage.textContent = 'tüm kelimeler bitti!';
+            statusMessage.textContent = 'Liste bitti. Başa dönmek için ileriye basın.';
         }
+        progressInfo.innerHTML = `<strong>${activeLetter}</strong> · ${Math.min(currentIndex + 1, shuffledWords.length)} / ${shuffledWords.length}`;
+        prevBtn.disabled = currentIndex === 0;
 
-        progressInfo.textContent = `Kelime ${Math.min(currentIndex + 1, shuffledWords.length)} / ${shuffledWords.length}`;
-        prevBtn.disabled = (currentIndex === 0);
-
-        // Kelime değişince çizim temizlenir
-        resetDrawing();
+        // Ayar açıksa yeni gelen öğe hemen seslendirilir
+        if (speakToggle.checked) speakCurrent(); else stopSpeaking();
     }
 
-    // ================= Heceleme =================
-    const syllableToggle = document.getElementById('syllable-toggle');
-    const VOWELS = 'aeıioöuüâîûAEIİOÖUÜÂÎÛ';
-
-    // Türkçe heceleme kuralı: her hecede bir ünlü olur; iki ünlü
-    // arasındaki ünsüzlerin sonuncusu sonraki heceye geçer.
-    function heceleKelime(word) {
-        const vowelIdx = [];
-        for (let i = 0; i < word.length; i++) {
-            if (VOWELS.includes(word[i])) vowelIdx.push(i);
+    function goNext() {
+        if (currentIndex < shuffledWords.length) {
+            currentIndex++;
+        } else {
+            shuffleArray(shuffledWords); // liste bitince yeniden karıştır
+            currentIndex = 0;
         }
-        if (vowelIdx.length < 2) return word;
-
-        const cuts = [];
-        for (let v = 0; v < vowelIdx.length - 1; v++) {
-            const a = vowelIdx[v], b = vowelIdx[v + 1];
-            let lastConsonant = -1;
-            for (let k = a + 1; k < b; k++) {
-                if (/\p{L}/u.test(word[k])) lastConsonant = k;
-            }
-            cuts.push(lastConsonant === -1 ? b : lastConsonant);
-        }
-
-        const parts = [];
-        let prev = 0;
-        cuts.forEach(c => { parts.push(word.slice(prev, c)); prev = c; });
-        parts.push(word.slice(prev));
-        return parts.join('-');
+        updateDisplay();
     }
 
-    function hecele(line) {
-        return line.split(' ').map(heceleKelime).join(' ');
+    function goPrev() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateDisplay();
+        }
     }
 
-    // Metni ekrana yaz: ayar kapalıysa tireler silinir, tek renk;
-    // açıksa her kelime siyah heceyle başlar, heceler siyah/kırmızı sırayla
-    const shrinkToggle = document.getElementById('shrink-toggle');
-    const splitToggle = document.getElementById('split-toggle');
-    const splitRow = document.getElementById('split-row');
-    const SOFT_HYPHEN = '\u00AD'; // yalnızca satır sonunda bölünürse "-" olarak görünür
+    nextBtn.addEventListener('click', goNext);
+    prevBtn.addEventListener('click', goPrev);
 
-    // Metni ekrana yaz.
-    // Heceleme kapalıysa tek renk; açıksa her kelime siyah heceyle başlar.
-    // "Heceden böl" açıksa hece sınırlarına gizli bölme noktası konur,
-    // kapalıysa kelime bölünmez, gerekirse tamamı alt satıra geçer.
+    // Metin alanında kaydırma: sola = ileri, sağa = geri
+    let touchX = null, touchY = null;
+    wordCard.addEventListener('touchstart', e => {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+    }, { passive: true });
+    wordCard.addEventListener('touchend', e => {
+        if (touchX === null) return;
+        const dx = e.changedTouches[0].clientX - touchX;
+        const dy = e.changedTouches[0].clientY - touchY;
+        touchX = touchY = null;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            dx < 0 ? goNext() : goPrev();
+        }
+    });
+
+    // ================= Heceleme ve sığdırma =================
     function renderText(text) {
         const sep = splitToggle.checked ? SOFT_HYPHEN : '';
         wordDisplay.innerHTML = '';
@@ -847,8 +613,6 @@
         fitText();
     }
 
-    // "Küçült" açıksa metin tek satıra sığana kadar yazı boyutu küçültülür;
-    // kapalıysa normal boyutta kalır ve satıra bölünür.
     function fitText() {
         wordDisplay.style.fontSize = '';
         wordDisplay.style.whiteSpace = '';
@@ -865,402 +629,120 @@
     }
 
     function refreshCurrent() {
-        if (currentIndex < shuffledWords.length) {
-            renderText(shuffledWords[currentIndex]); // çizim silinmeden güncellenir
+        if (presentationScreen.classList.contains('active') && currentIndex < shuffledWords.length) {
+            renderText(shuffledWords[currentIndex]);
         }
     }
 
+    // Yazı tipi geç yüklenirse yeniden sığdır
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshCurrent);
+    window.addEventListener('resize', refreshCurrent);
+
+    // ================= Ayarlar =================
+    $('settings-btn').addEventListener('click', () => {
+        if (typeof pickVoice === 'function') pickVoice();
+        settingsOverlay.classList.add('open');
+    });
+    $('settings-close').addEventListener('click', () => settingsOverlay.classList.remove('open'));
+    settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('open'); });
+
     function updateSplitRowState() {
-        // Küçültme açıkken metin hep tek satırda kalır, bölme ayarının etkisi olmaz
         splitRow.classList.toggle('inactive', shrinkToggle.checked);
     }
 
-    // Ayarları hatırla
-    const SETTINGS = [
-        [syllableToggle, 'heceleAyari'],
-        [shrinkToggle, 'kucultAyari'],
-        [splitToggle, 'hecedenBolAyari']
-    ];
-    SETTINGS.forEach(([toggle, key]) => {
-        try { toggle.checked = localStorage.getItem(key) === '1'; } catch (e) {}
-        toggle.addEventListener('change', () => {
-            try { localStorage.setItem(key, toggle.checked ? '1' : '0'); } catch (e) {}
-            updateSplitRowState();
-            refreshCurrent();
-        });
+    // ================= Seslendirme =================
+    const speakToggle = $('speak-toggle');
+    const readBtn = $('read-btn');
+    const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+    let turkishVoice = null;
+
+    let voiceCount = 0;
+
+    // Türkçe sesi bul (Android'de dil kodu "tr-TR", "tr_TR" ya da "tur" gelebilir)
+    function pickVoice() {
+        if (!canSpeak) return;
+        const voices = speechSynthesis.getVoices() || [];
+        voiceCount = voices.length;
+        turkishVoice =
+            voices.find(v => /^tr[-_]TR/i.test(v.lang)) ||
+            voices.find(v => /^tu?r([-_]|$)/i.test(v.lang)) ||
+            voices.find(v => /t[uü]rk/i.test(v.name)) ||
+            null;
+        updateVoiceInfo();
+    }
+
+    function updateVoiceInfo() {
+        const info = $('voice-info');
+        if (!canSpeak) {
+            info.textContent = 'Bu tarayıcı seslendirmeyi desteklemiyor.';
+            info.className = 'voice-info warn';
+        } else if (turkishVoice) {
+            info.textContent = 'Kullanılan ses: ' + turkishVoice.name;
+            info.className = 'voice-info';
+        } else if (voiceCount > 0) {
+            info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden başka dilde okunuyor. ' +
+                'Çözüm: Telefon <b>Ayarlar → Metin okuma çıkışı</b> (Erişilebilirlik ya da Dil ve giriş altında) → ' +
+                'Google motorunun ⚙️ ayarı → <b>Ses verilerini yükle</b> → Türkçe\'yi indirin, sonra sayfayı yeniden açın.';
+            info.className = 'voice-info warn';
+        } else {
+            info.textContent = 'Sesler yükleniyor…';
+            info.className = 'voice-info';
+        }
+    }
+
+    if (canSpeak) {
+        pickVoice();
+        speechSynthesis.addEventListener
+            ? speechSynthesis.addEventListener('voiceschanged', pickVoice)
+            : (speechSynthesis.onvoiceschanged = pickVoice);
+    } else {
+        // Tarayıcı seslendirmeyi desteklemiyor
+        readBtn.disabled = true;
+        $('speak-row').classList.add('inactive');
+    }
+
+    function stopSpeaking() {
+        if (canSpeak) speechSynthesis.cancel();
+    }
+
+    function speak(text) {
+        if (!canSpeak || !text) return;
+        if (!turkishVoice) pickVoice(); // Android'de ses listesi geç gelebilir
+        const u = new SpeechSynthesisUtterance(text.replace(/-/g, ''));
+        u.lang = 'tr-TR';
+        if (turkishVoice) u.voice = turkishVoice;
+        u.rate = 0.8; // çocuklar için biraz yavaş
+        // Önceki okuma sürüyorsa kesip yenisini başlat
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
+            speechSynthesis.cancel();
+            setTimeout(() => speechSynthesis.speak(u), 120);
+        } else {
+            speechSynthesis.speak(u);
+        }
+    }
+
+    function speakCurrent() {
+        if (currentIndex < shuffledWords.length) speak(shuffledWords[currentIndex]);
+    }
+
+    // "Oku" butonu ve metne dokunma: her zaman tekrar okur
+    readBtn.addEventListener('click', speakCurrent);
+    wordCard.addEventListener('click', speakCurrent);
+
+    speakToggle.addEventListener('change', () => {
+        if (speakToggle.checked) speakCurrent(); else stopSpeaking();
     });
+
+    [[syllableToggle, 'heceleAyari'], [shrinkToggle, 'kucultAyari'], [splitToggle, 'hecedenBolAyari'], [speakToggle, 'seslendirAyari']]
+        .forEach(([toggle, key]) => {
+            try { toggle.checked = localStorage.getItem(key) === '1'; } catch (e) {}
+            toggle.addEventListener('change', () => {
+                try { localStorage.setItem(key, toggle.checked ? '1' : '0'); } catch (e) {}
+                updateSplitRowState();
+                refreshCurrent();
+            });
+        });
     updateSplitRowState();
-
-    // Pencere boyutu değişince yeniden sığdır
-    window.addEventListener('resize', () => {
-        if (presentationScreen.style.display === 'flex') fitText();
-    });
-
-    function goNext() {
-        if (currentIndex < shuffledWords.length) {
-            currentIndex++;
-        } else {
-            // Liste bitince yeniden karıştırıp başa dön
-            shuffleArray(shuffledWords);
-            currentIndex = 0;
-        }
-        updateDisplay();
-    }
-
-    function goPrev() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            updateDisplay();
-        }
-    }
-
-    nextBtn.addEventListener('click', goNext);
-    prevBtn.addEventListener('click', goPrev);
-
-    resetBtn.addEventListener('click', () => {
-        setupScreen.style.display = 'flex';
-        presentationScreen.style.display = 'none';
-        fileInput.value = '';
-        startBtn.disabled = true;
-        fileNameText.textContent = '📁 Bir .txt dosyası seçin veya buraya sürükleyin';
-        statusMessage.textContent = '';
-        closePopups();
-        closeModal();
-    });
-
-    // Klavye kısayolları
-    document.addEventListener('keydown', (e) => {
-        if (presentationScreen.style.display === 'flex') {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                e.preventDefault();
-                goNext();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                goPrev();
-            }
-        }
-    });
-
-    // ================= Harf Seçimi =================
-    const LETTERS = ['A','N','E','T','İ','L','O','K','U','R','I','M','Ü','S','Ö','Y','D','Z','Ç','B','G','C','Ş','P','H','V','Ğ','F','J'];
-    const FILE_TYPES = [
-        { key: 'acik',   label: 'Açık heceler' },
-        { key: 'kapali', label: 'Kapalı heceler' },
-        { key: 'uc',     label: 'Üç harfli heceler' },
-        { key: 'kelime', label: 'Kelimeler' },
-        { key: 'cumle',  label: 'Cümleler' }
-    ];
-    const GRID_COLS = 10;
-
-    const letterGrid = document.getElementById('letter-grid');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const modalLetter = document.getElementById('modal-letter');
-    const modalOptions = document.getElementById('modal-options');
-    const modalStart = document.getElementById('modal-start');
-    const modalCancel = document.getElementById('modal-cancel');
-    let selectedLetter = null;
-
-    LETTERS.forEach(letter => {
-        const cell = document.createElement('button');
-        cell.className = 'letter-cell';
-        cell.textContent = letter;
-        if (LETTER_DATA[letter]) {
-            cell.addEventListener('click', () => openModal(letter));
-        } else {
-            cell.disabled = true; // Dosyası olmayan harf (A, N, E)
-        }
-        letterGrid.appendChild(cell);
-    });
-
-    // Son satırı boş hücrelerle tamamla (tablo görünümü için)
-    const remainder = LETTERS.length % GRID_COLS;
-    if (remainder) {
-        for (let i = remainder; i < GRID_COLS; i++) {
-            const empty = document.createElement('div');
-            empty.className = 'letter-cell empty';
-            letterGrid.appendChild(empty);
-        }
-    }
-
-    function openModal(letter) {
-        selectedLetter = letter;
-        modalLetter.textContent = letter;
-        modalOptions.innerHTML = '';
-
-        FILE_TYPES.forEach(ft => {
-            const label = document.createElement('label');
-            label.className = 'file-option';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.value = ft.key;
-            cb.addEventListener('change', updateModalStart);
-            const name = document.createElement('span');
-            name.textContent = ft.label;
-            const count = document.createElement('span');
-            count.className = 'count';
-            count.textContent = LETTER_DATA[letter][ft.key].length;
-            label.append(cb, name, count);
-            modalOptions.appendChild(label);
-        });
-
-        updateModalStart();
-        modalOverlay.classList.add('open');
-    }
-
-    function closeModal() {
-        modalOverlay.classList.remove('open');
-    }
-
-    function updateModalStart() {
-        modalStart.disabled = modalOptions.querySelectorAll('input:checked').length === 0;
-    }
-
-    modalCancel.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModal();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal();
-    });
-
-    // Seçilen dosyaları birleştirip göstericiyi başlat
-    modalStart.addEventListener('click', () => {
-        const keys = [...modalOptions.querySelectorAll('input:checked')].map(cb => cb.value);
-        rawWords = keys.flatMap(k => LETTER_DATA[selectedLetter][k]);
-        if (rawWords.length === 0) return;
-        closeModal();
-        startPresentation();
-    });
-
-    // ================= Çizim Alanı =================
-    const canvas = document.getElementById('draw-canvas');
-    const canvasWrap = document.getElementById('canvas-wrap');
-    const ctx = canvas.getContext('2d');
-
-    const widthBtn = document.getElementById('width-btn');
-    const colorBtn = document.getElementById('color-btn');
-    const widthPopup = document.getElementById('width-popup');
-    const colorPopup = document.getElementById('color-popup');
-    const widthPreview = document.getElementById('width-preview');
-    const colorPreview = document.getElementById('color-preview');
-    const clearBtn = document.getElementById('clear-btn');
-    const undoBtn = document.getElementById('undo-btn');
-    const redoBtn = document.getElementById('redo-btn');
-
-    const WIDTHS = [2, 4, 7, 10, 14, 20, 28];
-    const COLORS = ['#1a1a1a', '#e74c3c', '#2e6fd8', '#27ae60', '#f39c12', '#8e44ad', '#8b5a2b'];
-
-    let penWidth = WIDTHS[2];
-    let penColor = COLORS[1]; // Varsayılan: kırmızı
-
-    // Her işlem: {type:'stroke', color, width, points:[{x,y}]} veya {type:'clear'}
-    let actions = [];
-    let redoStack = [];
-    let currentStroke = null;
-
-    // --- Araç kutularını oluştur ---
-    WIDTHS.forEach(w => {
-        const opt = document.createElement('button');
-        opt.className = 'width-option';
-        opt.title = w + ' px';
-        const line = document.createElement('span');
-        line.style.height = w + 'px';
-        opt.appendChild(line);
-        opt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            penWidth = w;
-            updateToolPreviews();
-            closePopups();
-        });
-        opt.dataset.value = w;
-        widthPopup.appendChild(opt);
-    });
-
-    COLORS.forEach(c => {
-        const opt = document.createElement('button');
-        opt.className = 'color-option';
-        opt.style.background = c;
-        opt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            penColor = c;
-            updateToolPreviews();
-            closePopups();
-        });
-        opt.dataset.value = c;
-        colorPopup.appendChild(opt);
-    });
-
-    function updateToolPreviews() {
-        // Seçili kalınlık butonun üzerinde görünür (çok kalınsa sığacak kadar)
-        widthPreview.style.height = Math.min(penWidth, 24) + 'px';
-        widthPreview.style.background = penColor;
-        colorPreview.style.background = penColor;
-
-        widthPopup.querySelectorAll('.width-option').forEach(o => {
-            o.classList.toggle('selected', Number(o.dataset.value) === penWidth);
-        });
-        colorPopup.querySelectorAll('.color-option').forEach(o => {
-            o.classList.toggle('selected', o.dataset.value === penColor);
-        });
-    }
-
-    function closePopups() {
-        widthPopup.classList.remove('open');
-        colorPopup.classList.remove('open');
-    }
-
-    widthBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const wasOpen = widthPopup.classList.contains('open');
-        closePopups();
-        if (!wasOpen) widthPopup.classList.add('open');
-    });
-
-    colorBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const wasOpen = colorPopup.classList.contains('open');
-        closePopups();
-        if (!wasOpen) colorPopup.classList.add('open');
-    });
-
-    widthPopup.addEventListener('click', e => e.stopPropagation());
-    colorPopup.addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('click', closePopups);
-
-    // --- Tuval boyutu ---
-    function resizeCanvas() {
-        const rect = canvasWrap.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        redraw();
-    }
-
-    new ResizeObserver(resizeCanvas).observe(canvasWrap);
-
-    // --- Çizim fonksiyonları ---
-    function drawStroke(s) {
-        ctx.strokeStyle = s.color;
-        ctx.fillStyle = s.color;
-        ctx.lineWidth = s.width;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        if (s.points.length === 1) {
-            const p = s.points[0];
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, s.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-            return;
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(s.points[0].x, s.points[0].y);
-        for (let i = 1; i < s.points.length; i++) {
-            ctx.lineTo(s.points[i].x, s.points[i].y);
-        }
-        ctx.stroke();
-    }
-
-    function redraw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Son "temizle" işleminden sonrakileri çiz
-        let start = 0;
-        for (let i = actions.length - 1; i >= 0; i--) {
-            if (actions[i].type === 'clear') { start = i + 1; break; }
-        }
-        for (let i = start; i < actions.length; i++) {
-            drawStroke(actions[i]);
-        }
-        updateHistoryButtons();
-    }
-
-    function hasVisibleStrokes() {
-        return actions.length > 0 && actions[actions.length - 1].type !== 'clear';
-    }
-
-    function updateHistoryButtons() {
-        undoBtn.disabled = actions.length === 0;
-        redoBtn.disabled = redoStack.length === 0;
-        clearBtn.disabled = !hasVisibleStrokes();
-    }
-
-    function getPoint(e) {
-        const rect = canvas.getBoundingClientRect();
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
-
-    canvas.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-        closePopups();
-        canvas.setPointerCapture(e.pointerId);
-        currentStroke = { type: 'stroke', color: penColor, width: penWidth, points: [getPoint(e)] };
-        drawStroke(currentStroke);
-    });
-
-    canvas.addEventListener('pointermove', (e) => {
-        if (!currentStroke) return;
-        const pts = currentStroke.points;
-        const prev = pts[pts.length - 1];
-        const p = getPoint(e);
-        pts.push(p);
-
-        ctx.strokeStyle = currentStroke.color;
-        ctx.lineWidth = currentStroke.width;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(prev.x, prev.y);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-    });
-
-    function endStroke() {
-        if (!currentStroke) return;
-        actions.push(currentStroke);
-        redoStack = [];
-        currentStroke = null;
-        updateHistoryButtons();
-    }
-
-    canvas.addEventListener('pointerup', endStroke);
-    canvas.addEventListener('pointercancel', endStroke);
-
-    // --- Araç butonları ---
-    // Temizle: soru sormadan siler (yanlışlıkla basılırsa "Geri al" ile geri gelir)
-    clearBtn.addEventListener('click', () => {
-        if (!hasVisibleStrokes()) return;
-        actions.push({ type: 'clear' });
-        redoStack = [];
-        redraw();
-    });
-
-    undoBtn.addEventListener('click', () => {
-        if (actions.length === 0) return;
-        redoStack.push(actions.pop());
-        redraw();
-    });
-
-    redoBtn.addEventListener('click', () => {
-        if (redoStack.length === 0) return;
-        actions.push(redoStack.pop());
-        redraw();
-    });
-
-    // Kelime değişince çizimi ve geçmişi tamamen sıfırla
-    function resetDrawing() {
-        actions = [];
-        redoStack = [];
-        currentStroke = null;
-        redraw();
-    }
-
-    updateToolPreviews();
-    updateHistoryButtons();
 </script>
-
 </body>
 </html>
