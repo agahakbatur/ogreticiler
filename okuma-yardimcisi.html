@@ -694,11 +694,13 @@
             info.textContent = 'Kullanılan ses: ' + turkishVoice.name;
             info.className = 'voice-info';
         } else if (voiceCount > 0) {
-            info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden sayfa okuma yapmıyor. ' +
-                'Çözüm: Telefon <b>Ayarlar › Metin okuma çıkışı</b> bölümüne girin ' +
-                '(Samsung\'da Genel yönetim altında, diğer telefonlarda Erişilebilirlik ya da Dil ve giriş altında). ' +
-                'Tercih edilen motor olarak <b>Google</b>\'ı seçin, yanındaki ⚙️ ayarından ' +
-                '<b>Ses verilerini yükle › Türkçe</b>\'yi indirin, sonra sayfayı yeniden açın.';
+            info.innerHTML = 'Telefonda Türkçe ses bulunamadı, bu yüzden sayfa okuma yapmıyor.<br><br>' +
+                'Eğer telefonunuzda Türkçe seçeneğini göremiyorsanız ve <b>Google Konuşma Hizmetleri</b> yüklü değilse ' +
+                '(örneğin Samsung\'un kendi ses motorunda Türkçe yoktur):<br>' +
+                '<b>1.</b> Play Store\'da <b>Google Konuşma Hizmetleri</b> (Speech Recognition and Synthesis from Google) ' +
+                'uygulamasını aratıp yükleyin. Yüklüyse güncelleyin, devre dışıysa etkinleştirin. Samsung hesabı gerekmez.<br>' +
+                '<b>2.</b> Telefon Ayarlar\'ında <b>metin okuma</b> diye aratın, <b>Tercih edilen motor</b> olarak Google\'ı seçin.<br>' +
+                '<b>3.</b> Yanındaki ⚙️ ayarından <b>Ses verilerini yükle › Türkçe</b>\'yi indirin, sonra bu sayfayı yeniden açın.';
             info.className = 'voice-info warn';
         } else {
             info.textContent = 'Sesler yükleniyor…';
