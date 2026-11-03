@@ -52,6 +52,24 @@
             max-width: 700px;
         }
 
+        .site-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: #e0f2f1;
+            color: #00796b;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            padding: 10px 16px;
+            border-radius: 10px;
+        }
+
+        .site-home:hover {
+            background: #b2dfdb;
+        }
+
         .menu-card h1 {
             color: #00796b;
             font-size: 2rem;
@@ -484,6 +502,7 @@
     <!-- MENÜ EKRANI -->
     <div id="menuScreen" class="screen active">
         <div class="menu-card">
+            <a class="site-home" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a>
             <h1>Ritmik Sayma Oyunu</h1>
 
             <div class="mode-tabs">
@@ -543,7 +562,7 @@
             </div>
             <div class="controls">
                 <button class="btn-icon" onclick="toggleSound()" id="soundBtn">🔊 Ses</button>
-                <button class="btn-icon" onclick="showMenu()">🏠 Ana Menü</button>
+                <button class="btn-icon" onclick="showMenu()">↩ Oyun Menüsü</button>
             </div>
         </div>
 
