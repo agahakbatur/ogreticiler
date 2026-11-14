@@ -8,6 +8,9 @@
  *    - Adds/changes clock theme
  *    - Changes some public methods
  * Adapted by YDr, 30.01.2025
+ * Timepicker.js
+ * Copyright (c) 2016-2019 ZulNs (@Yogyakarta / @Gorontalo)
+ * Licensed under the MIT License
  */
 'use strict';
 var metniGoster = false;
