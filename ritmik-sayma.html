@@ -281,7 +281,7 @@
 
         .board-container.side .cards-container {
             display: grid;
-            grid-template-columns: repeat(4, var(--card));
+            grid-template-columns: repeat(4, var(--tray-card, var(--card)));
             align-content: start;
             width: auto;
             flex: 0 0 auto;
@@ -293,7 +293,7 @@
                 align-items: center;
             }
             .board-container.side .cards-container {
-                grid-template-columns: repeat(auto-fill, var(--card));
+                grid-template-columns: repeat(auto-fill, var(--tray-card, var(--card)));
                 width: 100%;
             }
         }
@@ -309,6 +309,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 16px;
+            position: relative;
         }
 
         .title-area h2 {
@@ -419,6 +420,63 @@
         .number-card.three-digit {
             font-size: calc(var(--card) * 0.33);
         }
+
+        /* Kart alanındaki kartlar telefonda tahtadan bağımsız, büyük kalır */
+        .cards-container .number-card {
+            width: var(--tray-card, var(--card));
+            height: var(--tray-card, var(--card));
+            font-size: calc(var(--tray-card, var(--card)) * 0.42);
+        }
+        .cards-container .number-card.three-digit {
+            font-size: calc(var(--tray-card, var(--card)) * 0.33);
+        }
+
+        /* TUT-YAKINLAŞ: tahta kendi penceresinde büyür ve kayar */
+        .board-vp {
+            position: relative;
+            flex: 0 0 auto;
+            max-width: 100%;
+            overflow: hidden;
+            border-radius: 16px;
+            touch-action: none;
+        }
+        .board-vp .drop-zone-container {
+            width: max-content;
+            transform-origin: 0 0;
+            backdrop-filter: none;
+        }
+        .edge-band {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border-radius: 16px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            background:
+                linear-gradient(to bottom, rgba(0,137,123,0.18), rgba(0,137,123,0) 25%, rgba(0,137,123,0) 75%, rgba(0,137,123,0.18)),
+                linear-gradient(to right, rgba(0,137,123,0.18), rgba(0,137,123,0) 25%, rgba(0,137,123,0) 75%, rgba(0,137,123,0.18));
+        }
+        .board-vp.zoomdrag .edge-band { opacity: 1; }
+        .mini {
+            position: absolute;
+            right: 6px;
+            top: 6px;
+            padding: 3px;
+            box-sizing: content-box;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .mini.on { opacity: 1; }
+        .mini-grid { display: grid; gap: 1px; width: 100%; height: 100%; }
+        .mini-grid i { border-radius: 1px; background: #cfd8dc; }
+        .mini-grid i.e { background: #80cbc4; }
+        .mini-grid i.p { background: #4caf50; }
+        .mini-view { position: absolute; border: 2px solid #f57c00; border-radius: 3px; box-sizing: border-box; }
 
         .number-card.locked {
             background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
@@ -556,6 +614,8 @@
     <!-- OYUN EKRANI -->
     <div id="gameScreen" class="screen">
         <div class="header">
+            <!-- Yakınken görünen küçük harita: tahtayı kapatmasın diye başlık çubuğunda -->
+            <div class="mini" id="mini"><div class="mini-grid" id="miniGrid"></div><div class="mini-view" id="miniView"></div></div>
             <div class="title-area">
                 <h2 id="gameTitle">10'ar Ritmik Sayma</h2>
                 <p id="gameInstruction">Sayıları doğru sıraya yerleştir.</p>
@@ -568,7 +628,10 @@
 
         <div class="board-container">
             <!-- BOŞ KARTELA -->
-            <div class="drop-zone-container" id="dropZoneContainer"></div>
+            <div class="board-vp" id="boardVp">
+                <div class="drop-zone-container" id="dropZoneContainer"></div>
+                <div class="edge-band"></div>
+            </div>
             
             <!-- KARIŞIK KARTLAR -->
             <div class="cards-container" id="cardsContainer"></div>
@@ -765,9 +828,11 @@
             if (gameMode !== 'yuz') {
                 board.style.removeProperty('--box');
                 board.style.removeProperty('--card');
+                board.style.removeProperty('--tray-card');
                 let cols = n <= 10 ? n : Math.ceil(n / 2);
                 if (window.innerWidth <= 560) cols = Math.min(cols, 5);
                 drop.style.setProperty('--cols', cols);
+                measureBoard();
                 return;
             }
 
@@ -791,10 +856,184 @@
             }
             box = Math.max(26, Math.min(80, Math.floor(box)));
             board.style.setProperty('--box', box + 'px');
-            board.style.setProperty('--card', (box - (box > 40 ? 10 : 6)) + 'px');
+            const card = box - (box > 40 ? 10 : 6);
+            board.style.setProperty('--card', card + 'px');
+            // Telefonda kart alanındaki kartlar en az 54 piksel kalır
+            board.style.setProperty('--tray-card', (window.innerWidth <= 760 ? Math.max(card, 54) : card) + 'px');
             drop.style.gap = (box < 40 ? 4 : gap) + 'px';
+            measureBoard();
         }
         window.addEventListener('resize', updateLayout);
+
+        // ================= TUT-YAKINLAŞ (tahta penceresi) =================
+        const MIN_BOX_TOUCH = 58;   // telefon/tablet: yakınken kutular en az bu boyda
+        const MIN_BOX_LARGE = 44;   // bilgisayar/akıllı tahta
+        const CALM = 0.5;           // ortadaki sakin bölge (pencerenin yarısı)
+        const LOCK_MS = 300;        // boş kutu üstünde bekleyince kaymayı durdurma süresi
+        let VW = 0, VH = 0, zoomMax = 1, MW = 64, MH = 64;
+        let view = { s: 1, tx: 0, ty: 0 }, goal = { s: 1, tx: 0, ty: 0 };
+        const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Tahtanın doğal boyunu ölçer, pencereyi ona göre ayarlar
+        function measureBoard() {
+            const vp = document.getElementById('boardVp');
+            const drop = document.getElementById('dropZoneContainer');
+            view = { s: 1, tx: 0, ty: 0 }; goal = { s: 1, tx: 0, ty: 0 };
+            drop.style.transform = '';
+            vp.style.width = ''; vp.style.height = '';
+            VW = drop.offsetWidth; VH = drop.offsetHeight;
+            vp.style.width = VW + 'px';
+            vp.style.height = VH + 'px';
+            const firstBox = drop.querySelector('.drop-box');
+            const boxPx = firstBox ? firstBox.offsetWidth : 80;
+            const minBox = window.innerWidth >= 1000 ? MIN_BOX_LARGE : MIN_BOX_TOUCH;
+            zoomMax = Math.max(1, Math.min(2.6, minBox / boxPx));
+            if (zoomMax < 1.08) zoomMax = 1;   // kutular zaten büyükse yakınlaşma yok
+            // Küçük harita başlık çubuğunun yüksekliğini aşmasın
+            const head = document.querySelector('#gameScreen .header');
+            const maxH = Math.max(36, Math.min(64, (head ? head.offsetHeight : 76) - 18));
+            if (VW && VH) {
+                if (VW >= VH) { MW = maxH * Math.min(1.6, VW / VH); MH = MW * VH / VW; }
+                else { MH = maxH; MW = MH * VW / VH; }
+            }
+            const mini = document.getElementById('mini');
+            mini.style.width = MW + 'px'; mini.style.height = MH + 'px';
+            applyView();
+        }
+
+        function clampT(t, s, size) { return Math.min(0, Math.max(size - size * s, t)); }
+        function clampGoal() {
+            goal.tx = clampT(goal.tx, goal.s, VW);
+            goal.ty = clampT(goal.ty, goal.s, VH);
+        }
+        function applyView() {
+            const drop = document.getElementById('dropZoneContainer');
+            drop.style.transform = view.s === 1 && view.tx === 0 && view.ty === 0
+                ? '' : `translate(${view.tx}px, ${view.ty}px) scale(${view.s})`;
+            const mini = document.getElementById('mini');
+            const zoomed = view.s > 1.05;
+            mini.classList.toggle('on', zoomed);
+            if (zoomed && VW) {
+                const mw = MW, mh = MH;
+                const mv = document.getElementById('miniView');
+                mv.style.left = (3 + -view.tx / (VW * view.s) * mw) + 'px';
+                mv.style.top = (3 + -view.ty / (VH * view.s) * mh) + 'px';
+                mv.style.width = (mw / view.s) + 'px';
+                mv.style.height = (mh / view.s) + 'px';
+            }
+        }
+        function zoomAround(s, cx, cy) {
+            const r = document.getElementById('boardVp').getBoundingClientRect();
+            const ax = cx - r.left, ay = cy - r.top;
+            const wx = (ax - view.tx) / view.s, wy = (ay - view.ty) / view.s;
+            goal.s = s; goal.tx = ax - wx * s; goal.ty = ay - wy * s;
+            clampGoal();
+        }
+        function zoomOut() { goal.s = 1; goal.tx = 0; goal.ty = 0; }
+
+        function buildMini() {
+            const n = sequence.length;
+            const cols = parseInt(getComputedStyle(document.getElementById('dropZoneContainer')).getPropertyValue('--cols')) || Math.min(10, n);
+            const mg = document.getElementById('miniGrid');
+            const rows = Math.ceil(n / cols);
+            mg.innerHTML = '';
+            mg.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            mg.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            sequence.forEach((v, i) => {
+                const d = document.createElement('i');
+                d.dataset.v = v;
+                if (blankSet.has(i)) d.className = 'e';
+                mg.appendChild(d);
+            });
+        }
+        function markMini(v) {
+            const d = document.querySelector('#miniGrid i[data-v="' + v + '"]');
+            if (d) d.className = 'p';
+        }
+
+        // Kartın ortasının (bırakma noktası) yakınındaki en uygun boş kutu
+        function findHot(px, py) {
+            let best = null, bestD = Infinity, near = false;
+            document.querySelectorAll('#dropZoneContainer .drop-box').forEach(box => {
+                if (box.children.length !== 0) return;
+                const r = box.getBoundingClientRect();
+                const d = Math.hypot(px - (r.left + r.width / 2), py - (r.top + r.height / 2));
+                if (d < r.width * 0.8 && d < bestD) { bestD = d; best = box; near = d < r.width * 0.4; }
+            });
+            return best ? { box: best, near: near } : null;
+        }
+
+        function inRect(r, x, y, m) {
+            return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m;
+        }
+        // Kart tahtanın içine girince yakınlaşma başlar
+        function enteredBoard(px, py) {
+            return inRect(document.getElementById('boardVp').getBoundingClientRect(), px, py, 0);
+        }
+        // Tahtadan çıkılmış sayılması için: kartın kendisi kart alanına girmiş ya da tahtadan epey uzaklaşmış olmalı
+        // (parmak kartın altında olduğundan, tahtanın alt kenarında parmak kart alanına taşabilir; bu çıkış sayılmaz)
+        function leftBoard(px, py) {
+            const tray = document.getElementById('cardsContainer').getBoundingClientRect();
+            if (inRect(tray, px, py, -20)) return true;
+            return !inRect(document.getElementById('boardVp').getBoundingClientRect(), px, py, 90);
+        }
+
+        let lastFrame = performance.now();
+        function frame(now) {
+            const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
+            const vp = document.getElementById('boardVp');
+
+            if (activeCard && cloneCard) {
+                const p = cardPoint();
+                let over = dragOver ? !leftBoard(p.x, p.y) : enteredBoard(p.x, p.y);
+                if (over && !dragOver && zoomMax > 1) zoomAround(zoomMax, p.x, p.y);
+                if (!over && dragOver) zoomOut();
+                dragOver = over;
+
+                const h = over ? findHot(p.x, p.y) : null;
+                const hb = h ? h.box : null;
+                if (hb !== hotBox) {
+                    if (hotBox) hotBox.classList.remove('hovered');
+                    hotBox = hb; hotSince = now;
+                    if (hotBox) hotBox.classList.add('hovered');
+                }
+                const locked = h && h.near && now - hotSince > LOCK_MS;
+                const zoomedIn = goal.s > 1.02 && view.s > goal.s * 0.97;
+                vp.classList.toggle('zoomdrag', over && goal.s > 1.02);
+
+                if (over && zoomedIn && !locked) {
+                    const r = vp.getBoundingClientRect();
+                    const u = (p.x - (r.left + r.width / 2)) / (r.width / 2);
+                    const v = (p.y - (r.top + r.height / 2)) / (r.height / 2);
+                    const depth = Math.max(Math.abs(u), Math.abs(v));
+                    if (depth > CALM) {
+                        const k = Math.min(1, (depth - CALM) / (1 - CALM));
+                        const speed = 70 + 560 * k * k;
+                        const len = Math.hypot(u, v) || 1;
+                        goal.tx -= u / len * speed * dt;
+                        goal.ty -= v / len * speed * dt;
+                        clampGoal();
+                        view.tx = goal.tx; view.ty = goal.ty;
+                        applyView();   // kayma her karede ekrana yansısın
+                    }
+                }
+            } else {
+                vp.classList.remove('zoomdrag');
+            }
+
+            if (view.s !== goal.s || view.tx !== goal.tx || view.ty !== goal.ty) {
+                const a = reduceMotion ? 1 : 1 - Math.exp(-dt * 11);
+                view.s += (goal.s - view.s) * a;
+                view.tx += (goal.tx - view.tx) * a;
+                view.ty += (goal.ty - view.ty) * a;
+                if (Math.abs(view.s - goal.s) < 0.001 && Math.abs(view.tx - goal.tx) < 0.3 && Math.abs(view.ty - goal.ty) < 0.3) {
+                    view = { s: goal.s, tx: goal.tx, ty: goal.ty };
+                }
+                applyView();
+            }
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
@@ -809,6 +1048,8 @@
         }
 
         function showMenu() {
+            if (activeCard) finishDrag(null, true);
+            clearLeftovers();
             document.getElementById('gameScreen').classList.remove('active');
             document.getElementById('menuScreen').classList.add('active');
             document.getElementById('successModal').style.display = 'none';
@@ -841,6 +1082,8 @@
         }
 
         function initBoard() {
+            if (activeCard) finishDrag(null, true);
+            clearLeftovers();
             const dropContainer = document.getElementById('dropZoneContainer');
             const cardsContainer = document.getElementById('cardsContainer');
             
@@ -870,6 +1113,9 @@
                 dropContainer.appendChild(box);
             });
 
+            measureBoard();
+            buildMini();
+
             const toPlace = sequence.filter((v, i) => blankSet.has(i));
 
             // Kartları Karıştır ve Oluştur
@@ -888,6 +1134,7 @@
                 
                 // Pointer Events (Hem Fare Hem Dokunmatik)
                 card.addEventListener('pointerdown', onPointerDown);
+                card.addEventListener('dragstart', ev => ev.preventDefault());
                 cardsContainer.appendChild(card);
             });
         }
@@ -895,14 +1142,43 @@
         // DRAG & DROP SİSTEMİ (POINTER EVENTS)
         let activeCard = null;
         let cloneCard = null;
+        let activePointerId = null;
         let startX = 0, startY = 0;
         let downX = 0, downY = 0;
+        let lastX = 0, lastY = 0;
+        let raise = 0;              // dokunmada kart parmağın üstünde durur
+        let dragOver = false, hotBox = null, hotSince = 0;
+
+        // Kartın ortası: bırakma ve kaydırma bu noktaya göre hesaplanır
+        function cardPoint() {
+            const w = cloneCard ? cloneCard.offsetWidth : 0, h = cloneCard ? cloneCard.offsetHeight : 0;
+            return { x: lastX - startX + w / 2, y: lastY - startY - raise + h / 2 };
+        }
+        function positionClone() {
+            cloneCard.style.left = `${lastX - startX}px`;
+            cloneCard.style.top = `${lastY - startY - raise}px`;
+        }
+
+        // Ekranda yarım kalmış sürükleme izi varsa hepsini temizler
+        function clearLeftovers() {
+            document.querySelectorAll('.number-card.dragging').forEach(el => el.remove());
+            document.querySelectorAll('#cardsContainer .number-card').forEach(c => c.style.opacity = '1');
+            document.querySelectorAll('.drop-box.hovered').forEach(b => b.classList.remove('hovered'));
+        }
 
         function onPointerDown(e) {
-            if (e.currentTarget.classList.contains('locked')) return;
-            
-            activeCard = e.currentTarget;
-            activeCard.setPointerCapture(e.pointerId);
+            const card = e.currentTarget;
+            if (card.classList.contains('locked') || card.classList.contains('given')) return;
+            if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return; // sadece sol tık / tek parmak
+            e.preventDefault();
+
+            // Önceki sürükleme bir sebeple bitmediyse önce onu kapat
+            if (activeCard) finishDrag(null, true);
+            clearLeftovers();
+
+            activeCard = card;
+            activePointerId = e.pointerId;
+            try { activeCard.setPointerCapture(e.pointerId); } catch (err) {}
 
             downX = e.clientX;
             downY = e.clientY;
@@ -910,6 +1186,10 @@
             const rect = activeCard.getBoundingClientRect();
             startX = e.clientX - rect.left;
             startY = e.clientY - rect.top;
+            lastX = e.clientX; lastY = e.clientY;
+            raise = e.pointerType === 'mouse' ? 0 : Math.round(rect.height * 0.5 + 34);
+            if (raise) { startX = rect.width / 2; startY = rect.height / 2; }
+            dragOver = false; hotBox = null;
 
             // Sürükleme Görseli
             cloneCard = activeCard.cloneNode(true);
@@ -917,80 +1197,88 @@
             cloneCard.style.width = `${rect.width}px`;
             cloneCard.style.height = `${rect.height}px`;
             cloneCard.style.fontSize = getComputedStyle(activeCard).fontSize;
-            cloneCard.style.left = `${e.clientX - startX}px`;
-            cloneCard.style.top = `${e.clientY - startY}px`;
             document.body.appendChild(cloneCard);
+            positionClone();
 
             activeCard.style.opacity = '0.3';
 
             activeCard.addEventListener('pointermove', onPointerMove);
             activeCard.addEventListener('pointerup', onPointerUp);
-            activeCard.addEventListener('pointercancel', onPointerUp);
+            activeCard.addEventListener('pointercancel', onPointerCancel);
+            activeCard.addEventListener('lostpointercapture', onPointerCancel);
         }
 
         function onPointerMove(e) {
-            if (!cloneCard) return;
-            cloneCard.style.left = `${e.clientX - startX}px`;
-            cloneCard.style.top = `${e.clientY - startY}px`;
-
-            // Kutuların üzerindeyken vurgu
-            const dropBoxes = document.querySelectorAll('.drop-box');
-            dropBoxes.forEach(box => {
-                const rect = box.getBoundingClientRect();
-                if (box.children.length === 0 &&
-                    e.clientX >= rect.left && e.clientX <= rect.right &&
-                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                    box.classList.add('hovered');
-                } else {
-                    box.classList.remove('hovered');
-                }
-            });
+            if (!cloneCard || e.pointerId !== activePointerId) return;
+            lastX = e.clientX; lastY = e.clientY;
+            positionClone();
+            // Kutu vurgusu, yakınlaşma ve kayma her karede frame() içinde yapılır
         }
 
         function onPointerUp(e) {
-            if (!activeCard || !cloneCard) return;
+            if (e.pointerId !== activePointerId) return;
+            finishDrag(e, false);
+        }
 
-            activeCard.releasePointerCapture(e.pointerId);
-            activeCard.removeEventListener('pointermove', onPointerMove);
-            activeCard.removeEventListener('pointerup', onPointerUp);
-            activeCard.removeEventListener('pointercancel', onPointerUp);
+        // Tarayıcı sürüklemeyi yarıda keserse (pencere değişimi, sağ tık menüsü vb.)
+        function onPointerCancel(e) {
+            if (e.pointerId !== activePointerId) return;
+            finishDrag(e, true);
+        }
 
-            // Bırakılan yerdeki kutuyu tespit et
-            const dropBoxes = document.querySelectorAll('.drop-box');
+        function finishDrag(e, cancelled) {
+            const card = activeCard;
+            if (!card) return;
+
+            // Önce durumu sıfırla: aynı sürükleme iki kez bitirilemez
+            activeCard = null;
+            card.removeEventListener('pointermove', onPointerMove);
+            card.removeEventListener('pointerup', onPointerUp);
+            card.removeEventListener('pointercancel', onPointerCancel);
+            card.removeEventListener('lostpointercapture', onPointerCancel);
+            try {
+                if (activePointerId !== null && card.hasPointerCapture(activePointerId)) {
+                    card.releasePointerCapture(activePointerId);
+                }
+            } catch (err) {}
+            activePointerId = null;
+
             let placed = false;
-
-            dropBoxes.forEach(box => {
-                box.classList.remove('hovered');
-                const rect = box.getBoundingClientRect();
-
-                if (e.clientX >= rect.left && e.clientX <= rect.right &&
-                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                    
-                    // Kutu boş mu ve doğru kart mı?
-                    if (box.children.length === 0 && box.dataset.targetValue === activeCard.dataset.value) {
+            const target = hotBox;
+            if (hotBox) hotBox.classList.remove('hovered');
+            hotBox = null; dragOver = false;
+            try {
+                if (!cancelled && e) {
+                    if (target && target.children.length === 0 &&
+                        target.dataset.targetValue === card.dataset.value) {
                         // DOĞRU YERLEŞTİRME
-                        activeCard.classList.add('locked');
-                        activeCard.style.opacity = '1';
-                        box.appendChild(activeCard);
+                        card.classList.add('locked');
+                        target.appendChild(card);
+                        markMini(card.dataset.value);
                         placed = true;
                         playSound('correct');
                         checkWin();
                     }
+
+                    if (!placed) {
+                        // YANLIŞ VEYA BOŞA BIRAKMA (sadece dokunmada ses yok)
+                        const moved = Math.hypot(lastX - downX, lastY - downY);
+                        if (moved > 10) playSound('wrong');
+                    }
                 }
-            });
-
-            if (!placed) {
-                // YANLIŞ VEYA BOŞA BIRAKMA
-                activeCard.style.opacity = '1';
-                // Kart sürüklenmeden sadece dokunulduysa hata sesi çalma
-                const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
-                if (moved > 10) playSound('wrong');
+            } finally {
+                // Bırakınca tahta kısa bir an sonra tamamen görünür hâle döner
+                setTimeout(() => { if (!activeCard) zoomOut(); }, reduceMotion ? 0 : 380);
+                // Ne olursa olsun sürükleme izi her zaman silinir
+                card.style.opacity = '1';
+                if (cloneCard) cloneCard.remove();
+                cloneCard = null;
+                clearLeftovers();
             }
-
-            document.body.removeChild(cloneCard);
-            cloneCard = null;
-            activeCard = null;
         }
+
+        // Pencere odağı kaybolursa (Alt+Tab vb.) yarım kalan sürüklemeyi bitir
+        window.addEventListener('blur', () => { if (activeCard) finishDrag(null, true); });
 
         function checkWin() {
             const emptyBoxes = [...document.querySelectorAll('.drop-box')].filter(b => b.children.length === 0);
