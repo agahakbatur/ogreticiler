@@ -103,7 +103,19 @@ function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixe
 new ResizeObserver(resize).observe(canvas);resize();
 function setHud(){$('score').textContent=score;$('wave').textContent=wave;$('hp').textContent='♥'.repeat(hp)+'♡'.repeat(3-hp);$('combo').textContent='KOMBO ×'+combo;}
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),950);}
-function makeQuestion(){let a=rand(0,level),b=rand(0,level-a);let sum=a+b;let opts=new Set([sum]);while(opts.size<3){let v=sum+rand(-4,4);if(v>=0&&v<=level)opts.add(v);else opts.add(rand(0,level));}let arr=[...opts].sort(()=>Math.random()-.5);return {a,b,sum,arr};}
+// Soru seçimi: sorular çoğunlukla iki sayısı da en az 2 olan toplamalardan gelir.
+// Sıfırlı toplama (%5) ve 1 ile toplama (20'ye kadar %10, sonra %5) az da olsa kalır; aynı soru kısa sürede tekrar gelmez.
+let recentQ=[];
+function pickOperands(){const r=Math.random();let a,b;
+if(r<0.05){a=rand(1,level);b=0;}
+else if(r<(level<=20?0.15:0.10)){a=rand(1,level-1);b=1;}
+else{const sum=rand(4,level);a=rand(2,sum-2);b=sum-a;}
+if(Math.random()<.5)[a,b]=[b,a];return [a,b];}
+function makeQuestion(){let a,b,key;
+for(let t=0;t<25;t++){[a,b]=pickOperands();key=Math.min(a,b)+'+'+Math.max(a,b);
+if(!recentQ.includes(key)&&!ships.some(s=>s.q.a+s.q.b===a+b&&Math.min(s.q.a,s.q.b)===Math.min(a,b)))break;}
+recentQ.push(key);if(recentQ.length>10)recentQ.shift();
+let sum=a+b;let opts=new Set([sum]);while(opts.size<3){let v=sum+rand(-4,4);if(v>=0&&v<=level)opts.add(v);else opts.add(rand(0,level));}let arr=[...opts].sort(()=>Math.random()-.5);return {a,b,sum,arr};}
 function spawn(){if(ships.length>=5)return;let q=makeQuestion();let type=rand(1,5);ships.push({id:Math.random(),x:W+45,y:rand(70,Math.max(100,H-90)),speed:(18+wave*2+rand(0,10))*(type===5?1.15:1),q,hp:1,type,phase:Math.random()*6});}
 function updateAnswers(){
 $('topQuestion').textContent = selected
