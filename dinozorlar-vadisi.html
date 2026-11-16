@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2f6b3a">
+<title>Dinozorlar Vadisi – Kayıp Yavrular</title>
+<!-- GoatCounter ziyaret sayacı (internet yoksa sessizce atlanır, oyun yine çalışır) -->
+<script data-goatcounter="https://agah.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<style>
+:root{--leaf:#2f6b3a;--leaf2:#3f8a4b;--sand:#fff4dc;--wood:#7a4e26;--gold:#ffc83d;--text:#20321f;--ok:#4cbf5a}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#1d3d24;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0,#3b7a45 0,#1d3d24 70%)}
+#app{width:min(100vw,1200px);height:min(100dvh,800px);display:flex;flex-direction:column;padding:10px;gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:46px}
+.brandwrap{display:flex;align-items:center;gap:8px;min-width:0}
+.homebtn{display:inline-flex;align-items:center;gap:5px;background:#fff4dc;color:#3a2a14;border:2px solid #c9a56a;border-radius:10px;padding:6px 10px;font-weight:800;font-size:clamp(11px,1.8vw,14px);text-decoration:none;white-space:nowrap}
+.brand{font-weight:900;letter-spacing:.05em;font-size:clamp(14px,2.4vw,22px);color:#fff4dc;text-shadow:0 2px 0 #12301a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.stat{background:#fff4dc;border:2px solid #c9a56a;border-radius:12px;padding:5px 9px;font-size:clamp(11px,1.8vw,14px);font-weight:700;white-space:nowrap;color:#3a2a14}
+.stat b{color:#b5531b;margin-left:3px}
+#stage{position:relative;flex:1;min-height:240px;border:3px solid #c9a56a;border-radius:20px;overflow:hidden;background:#bfe9ff;box-shadow:0 10px 40px #0006}
+#bg{position:absolute;inset:0;width:100%;height:100%}
+#qbox{position:absolute;top:4%;left:50%;transform:translateX(-50%);text-align:center;z-index:2;pointer-events:none}
+#qtext{display:inline-block;background:#fffdf5;border:4px solid #7a4e26;border-radius:22px;padding:.08em .55em;font-size:clamp(36px,min(9vw,11vh),88px);font-weight:900;color:#2a1c0e;box-shadow:0 6px 0 #00000030;white-space:nowrap}
+#qtext.solved{color:#1f7a2c;border-color:#2e9b3e}
+#qhint{margin-top:6px;font-size:clamp(12px,2vw,17px);font-weight:800;color:#fff;text-shadow:0 2px 3px #000a}
+#nest{position:absolute;top:3%;left:2%;width:clamp(96px,17%,190px);z-index:2;text-align:center;transition:transform .2s}
+#nest .lbl{font-weight:900;font-size:clamp(11px,1.6vw,15px);color:#fff;text-shadow:0 2px 3px #000a;margin-bottom:2px}
+#nest .bowl{min-height:clamp(40px,7vh,70px);background:repeating-linear-gradient(160deg,#9a6a39 0 6px,#80552b 6px 11px);border:3px solid #5b3a1c;border-radius:14px 14px 50% 50%/14px 14px 45% 45%;padding:6px 8px 12px;display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:flex-end}
+#nest .bowl svg{width:clamp(13px,1.9vw,20px);height:clamp(13px,1.9vw,20px)}
+#nest.bump{transform:scale(1.12)}
+#dinos{position:absolute;left:0;right:0;bottom:2%;height:56%;display:flex;justify-content:space-evenly;align-items:flex-end;z-index:3}
+.dino{height:100%;width:31%;max-width:300px;background:none;border:0;padding:0;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:transform .7s cubic-bezier(.5,-0.2,.6,1),opacity .5s,filter .3s}
+.dino svg{width:100%;height:100%;display:block;overflow:visible}
+.dino .inner{width:100%;height:100%;animation:bob 2.2s ease-in-out infinite;transform-origin:50% 100%}
+.dino:nth-child(2) .inner{animation-delay:-.7s}.dino:nth-child(3) .inner{animation-delay:-1.4s}
+.dino.pop .inner{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both,bob 2.2s ease-in-out .45s infinite}
+.dino .m-sad{display:none}
+.dino.sad{cursor:default;filter:grayscale(.85) brightness(1.05);opacity:.55}
+.dino.sad .m-sad{display:inline}.dino.sad .m-happy{display:none}
+.dino.sad .inner{animation:shake .45s ease both}
+.dino.happy .inner{animation:hop .55s ease both}
+.dino.leave{opacity:0;transform:translateY(30%)}
+.dino:focus-visible{outline:4px dashed #fff;outline-offset:-6px;border-radius:20px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5%)}}
+@keyframes pop{0%{transform:scale(.2) translateY(40%);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7%) rotate(-4deg)}40%{transform:translateX(6%) rotate(3deg)}60%{transform:translateX(-4%)}80%{transform:translateX(3%)}}
+@keyframes hop{0%{transform:translateY(0)}35%{transform:translateY(-16%) scale(1.06)}70%{transform:translateY(0) scale(1.02,.96)}100%{transform:translateY(0)}}
+#toast{position:absolute;top:34%;left:50%;transform:translateX(-50%);background:#fffdf5;border:3px solid #7a4e26;color:#2a1c0e;padding:7px 16px;border-radius:999px;font-weight:900;font-size:clamp(13px,2.2vw,20px);opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap;z-index:4}
+#toast.show{opacity:1}#toast.good{border-color:#2e9b3e;color:#1f7a2c}#toast.bad{border-color:#c2512b;color:#a63a17}
+#progress{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+#progress span{width:clamp(12px,2.6vw,24px);height:clamp(12px,2.6vw,24px);border-radius:50% 50% 50% 50%/58% 58% 42% 42%;background:#ffffff30;border:2px solid #ffffff60}
+#progress span.cur{border-color:#fff;background:#ffffff60;transform:scale(1.15)}
+#progress span.gold{background:var(--gold);border-color:#a86f00}
+#progress span.ok{background:#9be08f;border-color:#3d8a35}
+footer{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#e4f2dc;font-size:12px}
+.smallbtn{background:#fff4dc;color:#3a2a14;border:2px solid #c9a56a;border-radius:10px;padding:5px 10px;font-weight:800;cursor:pointer}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;background:#0d2412b8;backdrop-filter:blur(3px);z-index:10}
+.dialog{width:min(100%,480px);max-height:100%;overflow:auto;background:#fff8e8;border:4px solid #7a4e26;border-radius:24px;padding:20px;text-align:center;box-shadow:0 18px 60px #000a}
+.dialog h1{margin:0;color:#2f6b3a;font-size:clamp(24px,5.5vw,38px);line-height:1.1}
+.dialog h2{margin:2px 0 8px;color:#b5531b;font-size:clamp(16px,3.5vw,22px)}
+.dialog p{color:#4a3a22;line-height:1.4;margin:8px 0 12px;font-size:15px}
+.grade{margin:10px 0 4px;font-weight:900;color:#2f6b3a;text-align:left;font-size:15px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice{padding:10px 6px;border:2px solid #c9a56a;border-radius:14px;background:#fff;color:#3a2a14;font-weight:900;font-size:18px;cursor:pointer;line-height:1.15}
+.choice small{display:block;font-weight:700;font-size:12px;color:#7a6a50}
+.choice.active{border:3px solid #2f6b3a;background:#e2f5df;color:#1f5a2a}
+.primary{width:100%;margin-top:14px;padding:13px;border:0;border-radius:14px;background:linear-gradient(180deg,#58c35f,#2f8a3b);color:#fff;font-size:18px;font-weight:950;cursor:pointer;box-shadow:0 4px 0 #1d5a26}
+.secondary{width:100%;margin-top:8px;padding:10px;border:2px solid #c9a56a;border-radius:14px;background:#fff;color:#3a2a14;font-size:15px;font-weight:800;cursor:pointer}
+.stars{font-size:clamp(40px,10vw,60px);color:var(--gold);text-shadow:0 3px 0 #a86f00;letter-spacing:.05em}
+.stars .off{color:#e3d6bb;text-shadow:none}
+.res{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.res div{background:#fff;border:2px solid #e2cfa6;border-radius:12px;padding:8px 12px;font-weight:800}
+.res b{color:#b5531b;font-size:20px}
+@media(max-height:560px){#app{padding:5px;gap:4px}header{min-height:32px}.stat{padding:3px 7px}.dialog{padding:12px}.dialog p{margin:4px 0 8px}.primary{margin-top:8px;padding:10px}}
+@media(orientation:portrait){
+  #app{height:100dvh;width:100vw;padding:7px}
+  header{flex-wrap:wrap}
+  #nest{top:auto;bottom:calc(2% + min(56%,34vw) + 8px);left:50%;transform:translateX(-50%);width:clamp(110px,38%,200px)}
+  #nest.bump{transform:translateX(-50%) scale(1.12)}
+  #dinos{height:min(56%,34vw)}
+  #toast{top:auto;bottom:calc(2% + min(56%,34vw) + 4px)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="brandwrap"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🦕 DİNOZORLAR VADİSİ</div></div>
+  <div class="stats">
+    <div class="stat">BÖLÜM <b id="sBolum">1</b></div>
+    <div class="stat">SORU <b id="sSoru">1/20</b></div>
+    <div class="stat">🥚 <b id="sAltin">0</b></div>
+  </div>
+</header>
+<div id="stage">
+  <svg id="bg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
+  <div id="nest"><div class="lbl">🪺 YUVA <span id="nestCount">0</span>/20</div><div class="bowl" id="bowl"></div></div>
+  <div id="qbox"><div id="qtext">&nbsp;</div><div id="qhint">Doğru cevabı taşıyan yavruyu kurtar!</div></div>
+  <div id="dinos"></div>
+  <div id="toast"></div>
+  <div id="overlay"><div class="dialog" id="dialog"></div></div>
+</div>
+<div id="progress"></div>
+<footer><span id="regionName">Yeşil Orman</span><button class="smallbtn" id="soundBtn">🔊 Ses açık</button></footer>
+</div>
+
+<script>
+/* =====================================================================
+   DİNOZORLAR VADİSİ – KAYIP YAVRULAR
+   SORU MOTORU (oyundan bağımsız; tek başına test edilebilir)
+   ===================================================================== */
+const DinoEngine = (() => {
+  const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+  const shuffle = arr => { const r = [...arr]; for (let i = r.length - 1; i > 0; i--) { const j = rnd(0, i); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+  const T = n => Math.floor(n / 10), O = n => n % 10;
+
+  // Soru türleri: test(a,b) işlemin bu türe girip girmediğini, base kolaylık/zorluk ağırlığını belirtir.
+  const TYPES = {
+    // 1. sınıf · 10 içinde
+    normal:     { base: 0.0, test: (a, b) => a >= 2 && a <= 9 && b >= 1 && b < a },            // 8 − 3
+    from10:     { base: 1.0, test: (a, b) => a === 10 && b >= 1 && b <= 9 },                    // 10 − 6
+    zero:       { base: 0.2, test: (a, b) => b === 0 && a >= 2 && a <= 10 },                    // 7 − 0
+    same:       { base: 0.5, test: (a, b) => a === b && a >= 2 && a <= 10 },                    // 6 − 6
+    // 1. sınıf · 20 içinde (onluk bozmasız)
+    oneDigit:   { base: 0.4, test: (a, b) => a >= 11 && a <= 19 && b >= 1 && b < O(a) },        // 18 − 5
+    toTen:      { base: 0.2, test: (a, b) => a >= 11 && a <= 19 && b === O(a) },                // 17 − 7
+    twoDigit:   { base: 1.0, test: (a, b) => (a >= 11 && a <= 19 && b >= 10 && b < a && O(b) <= O(a)) || (a === 20 && b === 10) }, // 16 − 13
+    // 2. sınıf · 20 içinde (onluk bozmalı)
+    noBorrow20: { base: 0.0, test: (a, b) => TYPES.oneDigit.test(a, b) || TYPES.toTen.test(a, b) || TYPES.twoDigit.test(a, b) },
+    borrow20:   { base: 1.2, test: (a, b) => a >= 11 && a <= 19 && b >= 2 && b <= 9 && O(a) < O(b) }, // 14 − 8
+    from20:     { base: 1.6, test: (a, b) => a === 20 && b >= 1 && b <= 19 && b !== 10 },       // 20 − 7, 20 − 13
+    // 2. sınıf · 100 içinde
+    noBorrow:   { base: 0.0, test: (a, b) => a >= 21 && a <= 99 && O(a) > 0 && b >= 2 && b < a && O(a) >= O(b) && O(b) > 0 }, // 78 − 25
+    borrow:     { base: 1.2, test: (a, b) => a >= 21 && a <= 99 && O(a) > 0 && b >= 2 && O(a) < O(b) && T(a) > T(b) },        // 73 − 28
+    zeroBorrow: { base: 1.6, test: (a, b) => a >= 20 && a <= 100 && O(a) === 0 && b >= 2 && b < a && O(b) > 0 },              // 90 − 46
+    tens:       { base: 0.4, test: (a, b) => a >= 20 && a <= 100 && O(a) === 0 && b >= 10 && b < a && O(b) === 0 }        // 70 − 30
+  };
+
+  const MODES = {
+    's1-10':  { max: 10,  sinif: 1, ad: '10 içinde',  alt: 'çıkarma',          dist: [['normal', 12], ['from10', 5], ['zero', 2], ['same', 1]] },
+    's1-20':  { max: 20,  sinif: 1, ad: '20 içinde',  alt: 'onluk bozmasız',   dist: [['oneDigit', 10], ['twoDigit', 6], ['toTen', 4]] },
+    's2-20':  { max: 20,  sinif: 2, ad: '20 içinde',  alt: 'onluk bozmalı',    dist: [['noBorrow20', 6], ['borrow20', 10], ['from20', 4]] },
+    's2-100': { max: 100, sinif: 2, ad: '100 içinde', alt: 'zor sorular',      dist: [['noBorrow', 7], ['borrow', 7], ['zeroBorrow', 3], ['tens', 3]] }
+  };
+
+  function pool(type, max) {
+    const out = [];
+    for (let a = 0; a <= max; a++) for (let b = 0; b <= a; b++) if (TYPES[type].test(a, b)) out.push({ a, b, type });
+    return out;
+  }
+
+  // Çeldirici adayları: önce öğrencinin gerçekten yapabileceği hatalar, sonra yakın sayılar.
+  function candidates(q, max) {
+    const { a, b, type } = q, c = a - b, err = [], near = [];
+    const borrowCase = a >= 11 && O(a) < O(b);
+    if (borrowCase) {
+      err.push((T(a) - T(b)) * 10 + (O(b) - O(a)));   // onluk bozmayı unutma: küçükten büyüğü değil, büyükten küçüğü çıkarma (73−28 → 55)
+      err.push(c + 10);                               // onluk bozdu ama onlar basamağını azaltmayı unuttu (74−28 → 56)
+    }
+    if (type === 'zero') err.push(0);                 // "sıfır çıkarınca sonuç sıfır olur" yanılgısı
+    if (type === 'same') err.push(a);                 // 6 − 6 = 6 yanılgısı
+    if (max <= 10) err.push(a + b);                   // çıkarma yerine toplama yapma
+    if (max >= 100 && O(a) === 0 && O(b) > 0) err.push((T(a) - T(b)) * 10 + O(b)); // 90−46 → 56 (0−6'yı 6 yazma)
+    if (type === 'tens') near.push(c - 10, c + 10, c - 20, c + 20); // tam onluklarda çeldiriciler de tam onluk
+    else {
+      near.push(c - 1, c + 1, c - 2, c + 2);          // sayarken bir/iki şaşırma
+      if (max >= 20) near.push(c - 10, c + 10);       // onlar basamağında şaşırma
+    }
+    const ok = v => Number.isInteger(v) && v >= 0 && v <= max && v !== c;
+    const e = [...new Set(err.filter(ok))];
+    const n = [...new Set(near.filter(ok))].filter(v => !e.includes(v));
+    return { e: shuffle(e), n: shuffle(n) };
+  }
+
+  // rank: doğru cevabın üç sayı arasındaki büyüklük sırası (0 = en küçük, 1 = ortanca, 2 = en büyük).
+  // Bölüm boyunca bu sıra dengelenir; böylece "ortadaki sayıyı seç" gibi bir kısayol oluşmaz.
+  function pickWrong(q, max, rank) {
+    const c = q.a - q.b, { e, n } = candidates(q, max);
+    const lowE = e.filter(v => v < c), highE = e.filter(v => v > c);
+    const lowN = n.filter(v => v < c), highN = n.filter(v => v > c);
+    const low = [...lowE, ...lowN], high = [...highE, ...highN];
+    const feasible = [high.length >= 2, low.length >= 1 && high.length >= 1, low.length >= 2];
+    if (!feasible[rank]) {
+      const order = [rank, 1, 0, 2].filter(r => feasible[r]);
+      if (!order.length) return null;
+      rank = order[0];
+    }
+    let pick;
+    if (rank === 1) {
+      // Hata çeldiricisi varsa mutlaka kullan; diğer taraftan yakın sayı ekle.
+      if (lowE.length && (!highE.length || Math.random() < .5)) pick = [lowE[0], high[0]];
+      else if (highE.length) pick = [highE[0], low[0]];
+      else pick = [low[0], high[0]];
+    } else if (rank === 0) pick = high.slice(0, 2);
+    else pick = low.slice(0, 2);
+    return { wrong: pick, rank };
+  }
+
+  function balanced(n) { // 20 için: 7 + 7 + 6
+    const arr = [];
+    for (let i = 0; i < n; i++) arr.push(i % 3);
+    return shuffle(arr);
+  }
+  function noLongRuns(arr) { for (let i = 2; i < arr.length; i++) if (arr[i] === arr[i - 1] && arr[i] === arr[i - 2]) return false; return true; }
+
+  function build(modeKey) {
+    const M = MODES[modeKey], used = new Set();
+    let items = [];
+    for (const [type, count] of M.dist) {
+      const avail = shuffle(pool(type, M.max)).filter(it => !used.has(it.a + '-' + it.b));
+      if (avail.length < count) throw new Error('Yeterli soru yok: ' + type);
+      avail.slice(0, count).forEach(it => { used.add(it.a + '-' + it.b); items.push(it); });
+    }
+    // Zorluk puanı: tür ağırlığı + sayıların büyüklüğü + biraz rastgelelik.
+    items.forEach(it => { it.d = TYPES[it.type].base + (it.a / M.max) * 0.8 + Math.random() * 0.6; });
+    items.sort((x, y) => x.d - y.d);
+    // 4 kademe: 1–5, 6–10, 11–15, 16–20. Kademe içinde sıra karışık.
+    items = [0, 5, 10, 15].flatMap(s => shuffle(items.slice(s, s + 5)));
+
+    let ranks, pos, t = 0;
+    do { ranks = balanced(items.length); t++; } while (!noLongRuns(ranks) && t < 200);
+    t = 0;
+    do { pos = balanced(items.length); t++; } while (!noLongRuns(pos) && t < 200);
+
+    return items.map((it, i) => {
+      const correct = it.a - it.b;
+      const w = pickWrong(it, M.max, ranks[i]);
+      if (!w) throw new Error('Çeldirici üretilemedi: ' + it.a + '-' + it.b);
+      const others = shuffle(w.wrong);
+      const answers = [];
+      answers[pos[i]] = correct;
+      [0, 1, 2].filter(k => k !== pos[i]).forEach((k, j) => answers[k] = others[j]);
+      return { a: it.a, b: it.b, type: it.type, correct, answers, correctIndex: pos[i] };
+    });
+  }
+
+  function validate(qs, modeKey) {
+    const M = MODES[modeKey];
+    if (qs.length !== 20) throw new Error('Bölüm 20 soru olmalı');
+    const seen = new Set(), counts = {};
+    qs.forEach(q => {
+      const k = q.a + '-' + q.b;
+      if (seen.has(k)) throw new Error('Tekrar: ' + k); seen.add(k);
+      if (q.a > M.max || q.b > q.a || q.b < 0) throw new Error('Sınır dışı: ' + k);
+      if (q.correct !== q.a - q.b) throw new Error('Yanlış sonuç: ' + k);
+      if (q.answers.length !== 3 || new Set(q.answers).size !== 3) throw new Error('Seçenek hatası: ' + k);
+      if (q.answers.some(v => !Number.isInteger(v) || v < 0 || v > M.max)) throw new Error('Seçenek sınır dışı: ' + k);
+      if (q.answers[q.correctIndex] !== q.correct) throw new Error('Doğru cevap yerinde değil: ' + k);
+      if (!TYPES[q.type].test(q.a, q.b)) throw new Error('Tür uyuşmuyor: ' + k);
+      counts[q.type] = (counts[q.type] || 0) + 1;
+    });
+    M.dist.forEach(([t, c]) => { if (counts[t] !== c) throw new Error('Dağılım hatası: ' + t); });
+    return true;
+  }
+
+  function createLevel(modeKey) {
+    let lastErr;
+    for (let i = 0; i < 30; i++) {
+      try { const qs = build(modeKey); validate(qs, modeKey); return qs; } catch (e) { lastErr = e; }
+    }
+    throw lastErr;
+  }
+
+  return { createLevel, validate, MODES, TYPES };
+})();
+/* ======================= SORU MOTORU SONU ======================= */
+
+/* ===================== OYUN ===================== */
+(() => {
+  const $ = id => document.getElementById(id);
+  const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+  const shuffle = arr => { const r = [...arr]; for (let i = r.length - 1; i > 0; i--) { const j = rnd(0, i); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+
+  /* ---------- Ses (Web Audio; dosya gerekmez) ---------- */
+  let actx = null, soundOn = true;
+  function tone(f, t0, dur, type = 'triangle', vol = .16) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + .02); g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  function sfx(kind) {
+    if (!soundOn) return;
+    try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { return; }
+    const t = actx.currentTime;
+    if (kind === 'ok') [523, 659, 784].forEach((f, i) => tone(f, t + i * .09, .2));
+    else if (kind === 'gold') [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * .08, .22));
+    else if (kind === 'no') { tone(260, t, .16, 'sine', .14); tone(200, t + .13, .24, 'sine', .14); }
+    else if (kind === 'pop') tone(700, t, .08, 'sine', .07);
+    else if (kind === 'win') [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * .13, .28));
+  }
+  $('soundBtn').onclick = () => { soundOn = !soundOn; $('soundBtn').textContent = soundOn ? '🔊 Ses açık' : '🔇 Ses kapalı'; };
+
+  /* ---------- Bölgeler ---------- */
+  const REGIONS = [
+    { ad: 'Yeşil Orman',   sky: ['#9fdcff', '#e8f8ff'], far: '#8cc79a', near: '#5aa860', g1: '#7cc26a', g2: '#68b158', sun: '#ffe066' },
+    { ad: 'Mavi Göl',      sky: ['#8fd0ff', '#dff3ff'], far: '#93b9cf', near: '#64ad86', g1: '#9fd27c', g2: '#86c066', sun: '#fff1a0', water: true },
+    { ad: 'Volkan Eteği',  sky: ['#ffb98f', '#ffe7cf'], far: '#b88a76', near: '#8e6c58', g1: '#cf9f6c', g2: '#b98a58', sun: '#fff0b0', volcano: true },
+    { ad: 'Yıldızlı Gece', sky: ['#1c2756', '#47569a'], far: '#3b4f7a', near: '#2f5a4a', g1: '#3f7a52', g2: '#356a46', sun: '#f4f1d0', night: true }
+  ];
+  function tree(x, s, c1, c2) {
+    return `<g transform="translate(${x} 470) scale(${s})"><rect x="-9" y="-150" width="18" height="150" rx="8" fill="#8a5a32"/>
+      <ellipse cx="-45" cy="-150" rx="58" ry="16" fill="${c1}" transform="rotate(-25 0 -150)"/><ellipse cx="45" cy="-150" rx="58" ry="16" fill="${c1}" transform="rotate(25 0 -150)"/>
+      <ellipse cx="-30" cy="-160" rx="50" ry="14" fill="${c2}" transform="rotate(-55 0 -160)"/><ellipse cx="30" cy="-160" rx="50" ry="14" fill="${c2}" transform="rotate(55 0 -160)"/>
+      <circle cx="0" cy="-158" r="14" fill="${c2}"/></g>`;
+  }
+  function drawRegion(r) {
+    let s = `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${r.sky[0]}"/><stop offset="1" stop-color="${r.sky[1]}"/></linearGradient></defs>
+      <rect width="1000" height="600" fill="url(#sky)"/>`;
+    if (r.night) for (let i = 0; i < 60; i++) s += `<circle cx="${rnd(0, 1000)}" cy="${rnd(0, 300)}" r="${(Math.random() * 1.8 + .6).toFixed(1)}" fill="#fff" opacity="${(Math.random() * .6 + .4).toFixed(2)}"/>`;
+    s += `<circle cx="860" cy="90" r="46" fill="${r.sun}" opacity=".95"/>`;
+    if (r.night) s += `<circle cx="878" cy="78" r="40" fill="${r.sky[0]}"/>`;
+    s += `<path d="M0 330 Q150 250 300 320 T600 300 T1000 310 V600 H0Z" fill="${r.far}"/>`;
+    if (r.volcano) s += `<polygon points="540,340 670,150 740,150 870,340" fill="#7a5446"/><polygon points="670,150 705,185 740,150" fill="#ff7a2f"/>
+      <path d="M690 160 Q680 230 700 300" stroke="#ff8a3d" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <g fill="#9c9c9c" opacity=".55"><circle cx="705" cy="120" r="22"><animate attributeName="cy" values="130;60" dur="4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="4s" repeatCount="indefinite"/></circle>
+      <circle cx="725" cy="100" r="16"><animate attributeName="cy" values="120;40" dur="5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;0" dur="5s" repeatCount="indefinite"/></circle></g>`;
+    s += `<path d="M0 400 Q200 340 420 395 T1000 380 V600 H0Z" fill="${r.near}"/>`;
+    if (r.water) s += `<ellipse cx="560" cy="455" rx="300" ry="34" fill="#5fb8e6"/><ellipse cx="520" cy="448" rx="120" ry="6" fill="#bfe6fb" opacity=".8"/>`;
+    s += tree(70, 1, r.near, r.g1) + tree(940, .85, r.near, r.g1) + tree(290, .55, r.near, r.g2);
+    s += `<rect y="468" width="1000" height="132" fill="${r.g1}"/>
+      <ellipse cx="150" cy="520" rx="90" ry="14" fill="${r.g2}"/><ellipse cx="520" cy="560" rx="140" ry="16" fill="${r.g2}"/><ellipse cx="860" cy="515" rx="80" ry="12" fill="${r.g2}"/>`;
+    $('bg').innerHTML = s;
+    $('regionName').textContent = '📍 ' + r.ad;
+  }
+
+  /* ---------- Yavru dinozor çizimi ---------- */
+  const COLORS = [ // gövde, çizgi/koyu, süs
+    ['#7ed37a', '#3f8a3a', '#f6a23c'], ['#ffad5a', '#b8621f', '#7ac7ff'], ['#b493f0', '#6c4bb0', '#ffd24d'],
+    ['#6fc6f2', '#2f79a8', '#ff8db3'], ['#ff9fc0', '#c2507a', '#8fe08a'], ['#f2d45c', '#a98a18', '#ff7f50']
+  ];
+  const KINDS = ['plates', 'horns', 'crest'];
+  function dinoSVG(col, kind, num) {
+    const [f, d, acc] = col, fs = String(num).length >= 3 ? 22 : 30;
+    let back = '', front = '';
+    if (kind === 'plates') back = `<g fill="${acc}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"><polygon points="28,92 34,68 46,84"/><polygon points="42,80 52,56 62,76"/><polygon points="58,76 70,52 78,76"/><polygon points="74,78 84,60 88,80"/></g>`;
+    if (kind === 'horns') { back = `<circle cx="88" cy="46" r="27" fill="${acc}" stroke="${d}" stroke-width="2.5"/>`;
+      front = `<g fill="#fff6dd" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"><polygon points="121,52 130,36 129,56"/><polygon points="94,34 99,14 106,33"/></g>`; }
+    if (kind === 'crest') back = `<path d="M90 36 Q66 4 44 14 Q66 22 82 46 Z" fill="${acc}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    return `<svg viewBox="0 0 140 150" preserveAspectRatio="xMidYMax meet"><g class="inner">
+      <ellipse cx="70" cy="145" rx="46" ry="5" fill="#00000026"/>
+      <g stroke="${d}" stroke-width="2.5" stroke-linejoin="round">
+        <path d="M36 100 Q8 98 2 76 Q20 92 40 90 Z" fill="${f}"/>
+        ${back}
+        <rect x="38" y="116" width="19" height="27" rx="9" fill="${d}"/><rect x="80" y="116" width="19" height="27" rx="9" fill="${d}"/>
+        <ellipse cx="66" cy="102" rx="39" ry="31" fill="${f}"/>
+        <circle cx="98" cy="56" r="26" fill="${f}"/>
+        <ellipse cx="116" cy="62" rx="17" ry="13" fill="${f}"/>
+        ${front}
+        <ellipse cx="68" cy="108" rx="25" ry="22" fill="#fffaea"/>
+        <ellipse cx="94" cy="104" rx="6" ry="10" fill="${f}" transform="rotate(-25 94 104)"/>
+      </g>
+      <circle cx="104" cy="48" r="8.5" fill="#fff" stroke="${d}" stroke-width="2"/><circle cx="106" cy="49" r="4.6" fill="#222"/><circle cx="107.8" cy="47" r="1.7" fill="#fff"/>
+      <ellipse cx="113" cy="65" rx="5" ry="3" fill="#ff7c9a" opacity=".55"/><circle cx="127" cy="57" r="1.5" fill="${d}"/>
+      <path class="m-happy" d="M110 67 Q118 75 127 67" stroke="#3a2a20" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path class="m-sad" d="M110 73 Q118 66 127 73" stroke="#3a2a20" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <text x="68" y="${fs === 30 ? 118 : 116}" text-anchor="middle" font-size="${fs}" font-weight="900" font-family="system-ui,Arial,sans-serif" fill="#2a1c0e">${num}</text>
+    </g></svg>`;
+  }
+  function miniSVG(col) {
+    return `<svg viewBox="0 0 20 20"><circle cx="10" cy="11" r="8" fill="${col[0]}" stroke="${col[1]}" stroke-width="1.6"/><circle cx="12.5" cy="9" r="2.6" fill="#fff"/><circle cx="13" cy="9.2" r="1.3" fill="#222"/></svg>`;
+  }
+
+  /* ---------- Durum ---------- */
+  let mode = 's1-10', bolum = 1, questions = [], qi = 0, golden = 0, results = [], firstTry = true, busy = true, current = [];
+
+  function toast(text, cls) {
+    const t = $('toast'); t.textContent = text; t.className = 'show ' + (cls || '');
+    clearTimeout(toast.tm); toast.tm = setTimeout(() => t.className = '', 1300);
+  }
+  function hud() {
+    $('sBolum').textContent = bolum;
+    $('sSoru').textContent = Math.min(qi + 1, 20) + '/20';
+    $('sAltin').textContent = golden;
+    $('nestCount').textContent = results.length;
+    $('progress').innerHTML = Array.from({ length: 20 }, (_, i) => `<span class="${results[i] || (i === qi ? 'cur' : '')}"></span>`).join('');
+  }
+
+  function showQuestion() {
+    const q = questions[qi];
+    firstTry = true; busy = false;
+    $('qtext').className = ''; $('qtext').textContent = `${q.a} − ${q.b} = ?`;
+    $('qhint').style.visibility = qi < 3 && bolum === 1 ? 'visible' : 'hidden';
+    const cols = shuffle(COLORS).slice(0, 3), kinds = shuffle(KINDS);
+    current = q.answers.map((n, i) => ({ n, col: cols[i] }));
+    $('dinos').innerHTML = q.answers.map((n, i) =>
+      `<button class="dino pop" data-i="${i}" aria-label="Cevap ${n}">${dinoSVG(cols[i], kinds[i], n)}</button>`).join('');
+    [...$('dinos').children].forEach(b => b.addEventListener('click', () => pick(+b.dataset.i)));
+    sfx('pop'); hud();
+  }
+
+  function pick(i) {
+    if (busy) return;
+    const q = questions[qi], btn = $('dinos').children[i];
+    if (!btn || btn.classList.contains('sad')) return;
+    if (i === q.correctIndex) {
+      busy = true;
+      const res = firstTry ? 'gold' : 'ok';
+      if (firstTry) golden++;
+      results.push(res);
+      sfx(firstTry ? 'gold' : 'ok');
+      toast(firstTry ? '🥚 Harika! Altın yumurta!' : '🦕 Yavru kurtarıldı!', 'good');
+      $('qtext').textContent = `${q.a} − ${q.b} = ${q.correct}`; $('qtext').className = 'solved';
+      [...$('dinos').children].forEach((b, k) => { if (k !== i) b.classList.add('leave'); });
+      btn.classList.remove('pop'); btn.classList.add('happy');
+      setTimeout(() => {               // yavru yuvaya koşar
+        const br = btn.getBoundingClientRect(), nr = $('nest').getBoundingClientRect();
+        const dx = (nr.left + nr.width / 2) - (br.left + br.width / 2), dy = (nr.top + nr.height / 2) - (br.top + br.height / 2);
+        btn.style.transform = `translate(${dx}px,${dy}px) scale(.18)`; btn.style.opacity = '.2';
+      }, 550);
+      setTimeout(() => {
+        $('bowl').insertAdjacentHTML('beforeend', miniSVG(current[i].col));
+        $('nest').classList.add('bump'); setTimeout(() => $('nest').classList.remove('bump'), 220);
+        qi++; hud();
+        if (qi < questions.length) setTimeout(showQuestion, 250); else setTimeout(endBolum, 500);
+      }, 1300);
+    } else {
+      firstTry = false;
+      btn.classList.remove('pop'); btn.classList.add('sad'); btn.setAttribute('aria-disabled', 'true');
+      sfx('no'); toast('Bu yavru değil. Tekrar dene!', 'bad');
+    }
+  }
+
+  function startBolum() {
+    questions = DinoEngine.createLevel(mode);
+    qi = 0; golden = 0; results = [];
+    drawRegion(REGIONS[(bolum - 1) % REGIONS.length]);
+    $('bowl').innerHTML = '';
+    $('overlay').style.display = 'none';
+    hud(); showQuestion();
+  }
+
+  function endBolum() {
+    busy = true; sfx('win');
+    const stars = golden >= 18 ? 3 : golden >= 13 ? 2 : 1;
+    const next = REGIONS[bolum % REGIONS.length].ad;
+    $('dinos').innerHTML = '';
+    $('dialog').innerHTML = `<h1>BÖLÜM ${bolum} TAMAMLANDI!</h1>
+      <div class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></div>
+      <div class="res"><div>🦕 Kurtarılan yavru<br><b>20 / 20</b></div><div>🥚 Altın yumurta<br><b>${golden} / 20</b></div></div>
+      <p>Altın yumurta, yavruyu ilk denemede bulunca kazanılır.<br>Sıradaki bölge: <b>${next}</b></p>
+      <button class="primary" id="nextBtn">SONRAKİ BÖLÜM ▶</button>
+      <button class="secondary" id="menuBtn">Seviye değiştir</button>`;
+    $('overlay').style.display = 'flex';
+    $('nextBtn').onclick = () => { bolum++; startBolum(); };
+    $('menuBtn').onclick = startMenu;
+  }
+
+  function startMenu() {
+    busy = true; bolum = 1; $('dinos').innerHTML = '';
+    const btn = k => { const m = DinoEngine.MODES[k]; return `<button class="choice${k === mode ? ' active' : ''}" data-mode="${k}">${m.ad}<small>${m.alt}</small></button>`; };
+    $('dialog').innerHTML = `<h1>DİNOZORLAR VADİSİ</h1><h2>Kayıp Yavrular</h2>
+      <p>Yavru dinozorlar kayboldu! İşlemi çöz, doğru cevabı taşıyan yavruyu bul ve yuvasına götür.</p>
+      <div class="grade">1. SINIF</div><div class="choices">${btn('s1-10')}${btn('s1-20')}</div>
+      <div class="grade">2. SINIF</div><div class="choices">${btn('s2-20')}${btn('s2-100')}</div>
+      <button class="primary" id="startBtn">MACERAYA BAŞLA 🦕</button>
+      <p style="font-size:11px;margin:8px 0 0">Her bölüm 20 soru · Çevrimdışı oynanır · Dokunmatik ve fare destekli</p>`;
+    $('dialog').querySelectorAll('.choice').forEach(b => b.onclick = () => {
+      $('dialog').querySelectorAll('.choice').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); mode = b.dataset.mode;
+    });
+    $('startBtn').onclick = () => { sfx('pop'); startBolum(); };
+    $('overlay').style.display = 'flex';
+  }
+
+  // Klavye: 1, 2, 3 tuşları ile seçim (akıllı tahta / bilgisayar)
+  document.addEventListener('keydown', e => { if (['1', '2', '3'].includes(e.key)) pick(+e.key - 1); });
+
+  drawRegion(REGIONS[0]); hud(); startMenu();
+})();
+</script>
+</body>
+</html>

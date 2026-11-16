@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#04120c">
+<title>Çıkarma Yardımcısı</title>
+<!-- GoatCounter ziyaret sayacı (internet yoksa sessizce atlanır, sayfa yine çalışır) -->
+<script data-goatcounter="https://agah.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<style>
+:root{--bg:#04120c;--panel:#0b2117;--panel2:#0f2c1f;--line:#2a5a42;--soru:#010604;--mint:#4ef0a0;--gold:#ffd66b;--text:#effff6;--muted:#9fc7b2;--red:#ff6b6b}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0%,#11402b 0,#04120c 65%)}
+#app{position:relative;width:min(100vw,1100px);height:min(100dvh,780px);display:flex;flex-direction:column;padding:10px;gap:8px}
+
+/* Üst bölüm */
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:64px}
+.brandwrap{display:flex;align-items:center;gap:8px;min-width:0}
+.homebtn,.smallbtn{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);color:#dff7ea;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:700;font-size:clamp(11px,1.8vw,14px);text-decoration:none;white-space:nowrap;cursor:pointer;font-family:inherit}
+.homebtn:hover,.smallbtn:hover{background:#163a29}
+.brand{font-weight:900;letter-spacing:.08em;font-size:clamp(14px,2.5vw,22px);color:var(--mint);text-shadow:0 0 14px #2fe08a55;white-space:nowrap}
+.right{display:flex;align-items:center;gap:8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-size:clamp(11px,1.8vw,14px);white-space:nowrap;color:var(--muted)}
+.stat b{color:var(--gold);margin-left:4px}
+
+/* Altın kesesi */
+#purse{display:flex;flex-direction:column;align-items:center}
+#bag{width:clamp(52px,8vw,74px);animation:bob 2.6s ease-in-out infinite}
+#bagSquash{transform-origin:50% 100%}
+#bagSquash.gulp{animation:gulp .22s ease-out}
+#bag svg{width:100%;height:auto;display:block;overflow:visible}
+#goldText{font-weight:900;color:var(--gold);font-size:clamp(12px,1.9vw,15px);white-space:nowrap;margin-top:1px;text-shadow:0 0 8px #ffb80055}
+@keyframes bob{0%,100%{transform:translateY(-3px)}50%{transform:translateY(4px)}}
+@keyframes gulp{0%{transform:scale(1,1)}45%{transform:scale(1.09,.9)}100%{transform:scale(1,1)}}
+.ucanAltin{position:fixed;left:0;top:0;width:24px;height:24px;pointer-events:none;z-index:50;filter:drop-shadow(0 0 6px #ffcc33aa)}
+.ucanAltin svg{width:100%;height:100%;display:block}
+
+/* Soru alanı (en koyu) */
+#soru{position:relative;flex:1;min-height:0;display:flex;gap:12px;padding:12px;border:1px solid #1f4a34;border-radius:18px;background:var(--soru);box-shadow:inset 0 0 50px #000,0 10px 40px #0008}
+#nesneAlani{flex:1.5;min-width:0;min-height:0;display:flex;flex-direction:column;gap:6px}
+#ipucu{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:clamp(11px,1.6vw,13px);color:var(--muted)}
+#ipucu .smallbtn{padding:4px 8px;font-size:12px}
+#nesneler{flex:1;min-height:0;overflow:hidden;display:grid;align-content:center;justify-content:center}
+.nesne{position:relative;cursor:pointer;transition:transform .1s}
+.nesne:active{transform:scale(.93)}
+.nesne svg.obj{width:100%;height:100%;display:block;transition:opacity .12s}
+.nesne .cizgi{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .12s}
+.nesne.cizik svg.obj{opacity:.35}
+.nesne.cizik .cizgi{opacity:1}
+.cubuk{display:flex;align-items:center;border:2px solid #2f6b4c;border-radius:10px;background:#06170f;padding:2px 3px}
+.cubuk svg.obj{flex:1;min-width:0;height:90%}
+#islem{flex:1;display:flex;align-items:center;justify-content:center;gap:.22em;font-size:clamp(36px,7vw,80px);font-weight:900;white-space:nowrap;color:#f2fff8}
+#cevap{min-width:1.7em;height:1.35em;padding:0 .15em;border:3px dashed #5fae86;border-radius:.25em;display:inline-flex;align-items:center;justify-content:center;color:var(--gold);background:#06150e}
+#cevap.dogru{border:3px solid var(--mint);color:var(--mint);background:#0b2a1a}
+#cevap.yanlis{border:3px solid var(--red);color:var(--red);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+#toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);max-width:calc(100% - 20px);background:#0a2618ee;border:1px solid #3c7a5a;padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px;text-align:center;opacity:0;transition:opacity .15s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.iyi{color:var(--mint)} #toast.kotu{color:#ffb4b4;border-color:#8a3a3a}
+
+/* Tuş takımı */
+#tuslar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.tus{border:2px solid #3c7a5a;border-radius:14px;background:linear-gradient(180deg,#17402c,#0c2519);color:#fff;font-size:clamp(22px,4vw,32px);font-weight:900;min-height:52px;box-shadow:0 4px 0 #021009;cursor:pointer;font-family:inherit;padding:0}
+.tus:active{transform:translateY(2px);box-shadow:0 2px 0 #021009}
+.tus.kontrol{background:linear-gradient(180deg,#3ee08f,#1fae6a);color:#03140b;border-color:#7ff5bd}
+.tus:disabled{opacity:.4;cursor:default}
+
+/* Açılış / tur sonu penceresi */
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:#020a06dc;backdrop-filter:blur(5px);z-index:20}
+.dialog{width:min(100%,440px);max-height:100%;overflow:auto;background:linear-gradient(160deg,#143d2a,#0a1f15);border:1px solid #3f8a63;border-radius:22px;padding:22px;text-align:center;box-shadow:0 18px 60px #000a}
+.dialog h1{margin:0 0 5px;color:var(--mint);font-size:clamp(24px,6vw,36px);letter-spacing:.04em}
+.dialog p{color:#cfe9db;line-height:1.45;margin:10px 0 16px;font-size:14px}
+.dialog p b{color:var(--gold)}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.choice{padding:11px 5px;border:1px solid #3c7a5a;border-radius:12px;background:#0b2318;color:#fff;font-weight:800;font-family:inherit;font-size:14px;cursor:pointer}
+.choice small{display:block;font-weight:600;font-size:11px;color:var(--muted);margin-top:2px}
+.choice.active{border:2px solid var(--gold);background:#1d3a28;color:var(--gold)}
+.primary{width:100%;padding:13px;border:0;border-radius:13px;background:linear-gradient(90deg,#3ee08f,#1fae6a);color:#03140b;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit}
+.secondary{width:100%;margin-top:8px;padding:11px;border:1px solid #3c7a5a;border-radius:13px;background:#0b2318;color:#dff7ea;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.dialog .homebtn{margin-top:12px}
+
+@media(orientation:portrait){
+  #soru{flex-direction:column}
+  #islem{flex:0 0 auto;font-size:clamp(34px,12vw,72px);padding:4px 0 8px}
+}
+/* 100'lük sorularda yatay ekranda çubuklara daha çok yer */
+@media(orientation:landscape){#soru.onluk #nesneAlani{flex:3}#soru.onluk #islem{flex:0 0 auto;font-size:clamp(30px,5vw,64px)}}
+@media(max-width:560px){.brand{display:none}}
+@media(max-height:520px){
+  #app{padding:6px;gap:5px}
+  header{min-height:48px}
+  #bag{width:44px}
+  #soru{padding:8px}
+  #ipucu{display:none}
+  #tuslar{grid-template-columns:repeat(12,1fr);gap:5px}
+  .tus{min-height:42px;font-size:20px;border-radius:10px}
+  .dialog{padding:14px}.dialog p{margin:6px 0 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- Nesne çizimleri (vektör, bu sayfa için yeniden çizildi) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="kulahKes"><path d="M28 52 L72 52 L50 94Z"/></clipPath>
+    <radialGradient id="keseRenk" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#d9a35a"/><stop offset="1" stop-color="#7d5020"/></radialGradient>
+  </defs>
+  <symbol id="o-yildiz" viewBox="0 0 100 100">
+    <path d="M50 10 L61.8 37.8 L91.8 40.4 L69 60.2 L75.9 89.6 L50 74 L24.1 89.6 L31 60.2 L8.2 40.4 L38.2 37.8Z" fill="#ffc83d" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M50 10 L61.8 37.8 L91.8 40.4 L69 60.2 L75.9 89.6 L50 74 L24.1 89.6 L31 60.2 L8.2 40.4 L38.2 37.8Z" transform="translate(22.5 25.2) scale(.55)" fill="#ffe797"/>
+    <circle cx="43" cy="55" r="3" fill="#2b1a10"/><circle cx="57" cy="55" r="3" fill="#2b1a10"/>
+    <path d="M44 62 Q50 67 56 62" fill="none" stroke="#2b1a10" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="o-kalp" viewBox="0 0 100 100">
+    <path d="M50 88 C22 68 8 52 10 34 C12 18 34 10 50 28 C66 10 88 18 90 34 C92 52 78 68 50 88Z" fill="#ff5f9b" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="29" cy="34" rx="8" ry="5" transform="rotate(-35 29 34)" fill="#ffd3e4"/>
+    <path d="M70 26 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z" fill="#fff"/>
+  </symbol>
+  <symbol id="o-ananas" viewBox="0 0 100 100">
+    <g fill="#5fc46a" stroke="#2b1a10" stroke-width="3.5" stroke-linejoin="round">
+      <path d="M48 36 C34 32 24 24 22 12 C34 14 44 22 48 36Z"/>
+      <path d="M52 36 C66 32 76 24 78 12 C66 14 56 22 52 36Z"/>
+      <path d="M50 36 C40 26 38 14 46 4 C54 14 58 26 50 36Z"/>
+    </g>
+    <ellipse cx="50" cy="64" rx="25" ry="30" fill="#ffd54a" stroke="#2b1a10" stroke-width="4"/>
+    <path d="M34 48 l4 4 4 -4 M46 48 l4 4 4 -4 M58 48 l4 4 4 -4 M40 61 l4 4 4 -4 M52 61 l4 4 4 -4 M34 74 l4 4 4 -4 M46 74 l4 4 4 -4 M58 74 l4 4 4 -4 M40 86 l4 4 4 -4 M52 86 l4 4 4 -4" fill="none" stroke="#c78a12" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="o-tac" viewBox="0 0 100 100">
+    <path d="M16 80 L12 34 L32 52 L50 24 L68 52 L88 34 L84 80Z" fill="#ffc93c" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M15 67 L85 67 L84 80 L16 80Z" fill="#f2a628" stroke="#2b1a10" stroke-width="3.5" stroke-linejoin="round"/>
+    <g stroke="#2b1a10" stroke-width="3"><circle cx="12" cy="31" r="6" fill="#ff7096"/><circle cx="50" cy="21" r="7" fill="#ff7096"/><circle cx="88" cy="31" r="6" fill="#ff7096"/></g>
+    <g stroke="#2b1a10" stroke-width="2"><circle cx="32" cy="73.5" r="4" fill="#59d4ff"/><circle cx="50" cy="73.5" r="4" fill="#59d4ff"/><circle cx="68" cy="73.5" r="4" fill="#59d4ff"/></g>
+  </symbol>
+  <symbol id="o-fiyonk" viewBox="0 0 100 100">
+    <g fill="#f26b8a" stroke="#2b1a10" stroke-width="3.5" stroke-linejoin="round">
+      <path d="M46 56 L34 88 L43 83 L48 90 L52 58Z"/>
+      <path d="M54 56 L66 88 L57 83 L52 90 L48 58Z"/>
+    </g>
+    <g fill="#ff8aa6" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round">
+      <path d="M50 50 C38 28 10 26 10 50 C10 74 38 72 50 50Z"/>
+      <path d="M50 50 C62 28 90 26 90 50 C90 74 62 72 50 50Z"/>
+    </g>
+    <path d="M22 42 Q30 50 22 58 M78 42 Q70 50 78 58" fill="none" stroke="#d9587a" stroke-width="3" stroke-linecap="round"/>
+    <g fill="#fff" opacity=".85"><circle cx="30" cy="40" r="2.6"/><circle cx="34" cy="60" r="2.2"/><circle cx="70" cy="40" r="2.6"/><circle cx="66" cy="60" r="2.2"/></g>
+    <rect x="41" y="40" width="18" height="20" rx="6" fill="#ffd166" stroke="#2b1a10" stroke-width="3.5"/>
+  </symbol>
+  <symbol id="o-dondurma" viewBox="0 0 100 100">
+    <path d="M28 52 L72 52 L50 94Z" fill="#e8ad62" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <path clip-path="url(#kulahKes)" d="M30 56 L62 88 M42 52 L72 82 M70 56 L38 88 M58 52 L28 82" fill="none" stroke="#b97a33" stroke-width="2.6"/>
+    <path d="M24 54 C18 32 32 16 50 16 C68 16 82 32 76 54 Q70 60 63 54 Q56 60 50 54 Q44 60 37 54 Q30 60 24 54Z" fill="#9ef0c4" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <g stroke-width="3.2" stroke-linecap="round"><path d="M34 36 l6 -2" stroke="#ff6f9f"/><path d="M56 30 l5 3" stroke="#ffd23f"/><path d="M62 44 l6 -1" stroke="#ff6f9f"/><path d="M44 46 l4 3" stroke="#5aa9ff"/><path d="M46 28 l2 -5" stroke="#5aa9ff"/></g>
+    <path d="M52 9 Q55 3 61 2" fill="none" stroke="#2b1a10" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="50" cy="15" r="7" fill="#ff4d5e" stroke="#2b1a10" stroke-width="3"/>
+  </symbol>
+  <symbol id="o-fincan" viewBox="0 0 100 100">
+    <path d="M44 28 Q40 22 44 16 Q48 10 44 4 M58 28 Q54 22 58 16 Q62 10 58 4" fill="none" stroke="#b9f5d6" stroke-width="3" stroke-linecap="round" opacity=".6"/>
+    <ellipse cx="50" cy="82" rx="38" ry="9" fill="#ff9ec2" stroke="#2b1a10" stroke-width="4"/>
+    <path d="M76 46 C94 44 94 68 72 68" fill="none" stroke="#2b1a10" stroke-width="11" stroke-linecap="round"/>
+    <path d="M76 46 C94 44 94 68 72 68" fill="none" stroke="#fff3f7" stroke-width="4" stroke-linecap="round"/>
+    <path d="M20 38 L80 38 C80 64 68 80 50 80 C32 80 20 64 20 38Z" fill="#fff3f7" stroke="#2b1a10" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="50" cy="38" rx="30" ry="6" fill="#8a5a3a" stroke="#2b1a10" stroke-width="3"/>
+    <g fill="#ff7aa8"><circle cx="31" cy="53" r="3.5"/><circle cx="43" cy="57" r="3.5"/><circle cx="57" cy="57" r="3.5"/><circle cx="69" cy="53" r="3.5"/></g>
+  </symbol>
+</svg>
+
+<div id="app">
+<header>
+  <div class="brandwrap">
+    <a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a>
+    <div class="brand">✦ ÇIKARMA YARDIMCISI</div>
+  </div>
+  <div class="right">
+    <div class="stat">SORU <b id="soruSayac">–</b></div>
+    <button class="smallbtn" id="sesBtn" title="Sesi aç / kapat">🔊</button>
+    <div id="purse" title="Altın kesen">
+      <div id="bag"><div id="bagSquash">
+        <svg viewBox="0 -6 100 118" aria-hidden="true">
+          <ellipse cx="50" cy="34" rx="28" ry="9" fill="#5c3a14" stroke="#2b1a08" stroke-width="3"/>
+          <ellipse id="agiz" cx="50" cy="35" rx="22" ry="6" fill="#1c1004"/>
+          <g id="keseAltinlari" fill="#ffd34d" stroke="#a8740a" stroke-width="1.6">
+            <ellipse cx="50" cy="37" rx="8" ry="3.5"/><ellipse cx="39" cy="36" rx="8" ry="3.5"/><ellipse cx="61" cy="36" rx="8" ry="3.5"/>
+            <ellipse cx="45" cy="32" rx="8" ry="3.5"/><ellipse cx="56" cy="31" rx="8" ry="3.5"/><ellipse cx="36" cy="31" rx="8" ry="3.5"/>
+            <ellipse cx="64" cy="31" rx="8" ry="3.5"/><ellipse cx="50" cy="27" rx="8" ry="3.5"/><ellipse cx="50" cy="22" rx="8" ry="3.5"/>
+          </g>
+          <path d="M30 40 C8 58 6 104 50 106 C94 104 92 58 70 40Z" fill="url(#keseRenk)" stroke="#2b1a08" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M27 42 Q50 51 73 42" fill="none" stroke="#e8c36a" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="50" cy="76" r="14" fill="#ffd34d" stroke="#2b1a08" stroke-width="3"/>
+          <path d="M50 10 L61.8 37.8 L91.8 40.4 L69 60.2 L75.9 89.6 L50 74 L24.1 89.6 L31 60.2 L8.2 40.4 L38.2 37.8Z" transform="translate(37 61.96) scale(.26)" fill="#c98a12"/>
+        </svg>
+      </div></div>
+      <div id="goldText">0 altın</div>
+    </div>
+  </div>
+</header>
+
+<div id="soru">
+  <div id="nesneAlani">
+    <div id="ipucu"><span id="ipucuMetin"></span><button class="smallbtn" id="temizle">↺ Çizgileri sil</button></div>
+    <div id="nesneler"></div>
+  </div>
+  <div id="islem"><span id="sayiA">0</span><span>−</span><span id="sayiB">0</span><span>=</span><span id="cevap">&nbsp;</span></div>
+  <div id="toast"></div>
+</div>
+
+<div id="tuslar">
+  <button class="tus" data-t="1">1</button><button class="tus" data-t="2">2</button><button class="tus" data-t="3">3</button>
+  <button class="tus" data-t="4">4</button><button class="tus" data-t="5">5</button><button class="tus" data-t="sil" aria-label="Sil">⌫</button>
+  <button class="tus" data-t="6">6</button><button class="tus" data-t="7">7</button><button class="tus" data-t="8">8</button>
+  <button class="tus" data-t="9">9</button><button class="tus" data-t="0">0</button><button class="tus kontrol" data-t="ok" id="tusOk" aria-label="Kontrol et">✓</button>
+</div>
+
+<div id="overlay"><div class="dialog" id="dialog"></div></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const NESNELER=['yildiz','kalp','ananas','tac','fiyonk','dondurma','fincan'];
+const TUR=10, ODUL=10;
+const K_ALTIN='cikarmaYardimcisi.altin', K_SES='cikarmaYardimcisi.ses', K_SEVIYE='cikarmaYardimcisi.seviye';
+
+function oku(k,v){try{const x=localStorage.getItem(k);return x===null?v:x}catch(e){return v}}
+function yaz(k,v){try{localStorage.setItem(k,String(v))}catch(e){}}
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+let altin=parseInt(oku(K_ALTIN,'0'),10)||0;
+let sesAcik=oku(K_SES,'1')!=='0';
+let seviye=parseInt(oku(K_SEVIYE,'10'),10); if(![10,20,100].includes(seviye)) seviye=10;
+let soruNo=0, ilkDenemeDogru=0, kazanilan=0, mevcut=null, giris='', yanlisVar=false, kilit=true, oncekiNesne='';
+const sorulanlar=new Set();
+
+/* ---------- Ses (dosyasız, Web Audio ile üretilir) ---------- */
+let ctx=null;
+function sesHazirla(){
+  if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){ctx=null}}
+  if(ctx&&ctx.state==='suspended') ctx.resume();
+}
+function ton(f,bas,sure,tip,vol,f2){
+  if(!sesAcik||!ctx) return;
+  const t=ctx.currentTime+bas, o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=tip; o.frequency.setValueAtTime(f,t);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+sure);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+sure);
+  o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+sure+0.03);
+}
+const sesAltin=()=>{ton(1900,0,.12,'triangle',.11);ton(2650,.05,.2,'sine',.09)};
+const sesDogru=()=>{ton(523,0,.14,'triangle',.18);ton(659,.11,.14,'triangle',.18);ton(784,.22,.28,'triangle',.2)};
+const sesYanlis=()=>ton(230,0,.3,'sawtooth',.07,140);
+const sesTik=()=>ton(720,0,.05,'square',.035);
+function sesBtnGoster(){$('sesBtn').textContent=sesAcik?'🔊':'🔇'}
+$('sesBtn').onclick=()=>{sesAcik=!sesAcik;yaz(K_SES,sesAcik?'1':'0');sesBtnGoster();sesHazirla();sesTik()};
+
+/* ---------- Altın kesesi ---------- */
+const ESIKLER=[10,30,60,100,200,350,500,800,1200];
+function altinGoster(){
+  $('goldText').textContent=altin+' altın';
+  const gor=ESIKLER.filter(e=>altin>=e).length;
+  [...$('keseAltinlari').children].forEach((c,i)=>c.style.display=i<gor?'':'none');
+}
+const ALTIN_SVG='<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#ffd34d" stroke="#a8740a" stroke-width="3"/><circle cx="20" cy="20" r="11.5" fill="none" stroke="#e9b21f" stroke-width="2"/><path d="M50 10 L61.8 37.8 L91.8 40.4 L69 60.2 L75.9 89.6 L50 74 L24.1 89.6 L31 60.2 L8.2 40.4 L38.2 37.8Z" transform="translate(11 10.28) scale(.18)" fill="#fff2b0"/></svg>';
+function tekAltin(){
+  const s=$('cevap').getBoundingClientRect(), m=$('agiz').getBoundingClientRect(), z=24;
+  const el=document.createElement('div'); el.className='ucanAltin'; el.innerHTML=ALTIN_SVG; document.body.appendChild(el);
+  const sx=s.left+s.width/2-z/2+rnd(-24,24), sy=s.top+s.height/2-z/2;
+  const mx=m.left+m.width/2-z/2+rnd(-5,5), my=m.top+m.height/2-z/2;
+  const bitti=()=>{el.remove();altin++;yaz(K_ALTIN,altin);altinGoster();sesAltin();
+    const b=$('bagSquash');b.classList.remove('gulp');void b.offsetWidth;b.classList.add('gulp')};
+  if(!el.animate){bitti();return}
+  const a=el.animate([
+    {transform:`translate(${sx}px,${sy}px) scale(.5) rotate(0deg)`,opacity:0},
+    {transform:`translate(${sx}px,${sy-30}px) scale(1) rotate(60deg)`,opacity:1,offset:.15},
+    {transform:`translate(${mx}px,${my-80}px) scale(1) rotate(300deg)`,opacity:1,offset:.7,easing:'ease-in'},
+    {transform:`translate(${mx}px,${my}px) scale(.6) rotate(380deg)`,opacity:1}
+  ],{duration:950,easing:'ease-out'});
+  a.onfinish=bitti;
+}
+function altinYagdir(n){for(let i=0;i<n;i++) setTimeout(tekAltin,i*110)}
+
+/* ---------- Soru üretimi ---------- */
+function soruUret(){
+  let a,b,deneme=0;
+  do{
+    if(seviye===10){a=rnd(4,10);b=rnd(3,a-1)}         // 10 içinde; çıkan en az 3, sonuç en az 1
+    else if(seviye===20){a=rnd(11,20);b=rnd(5,a-1)}   // ilk sayı 11–20; çıkan 5..a-1 (sonuç 0 olmaz)
+    else {a=rnd(3,10)*10;b=rnd(2,a/10-1)*10}          // yalnız onluklar; çıkan en az 20, sonuç en az 10
+  }while(sorulanlar.has(a+'-'+b)&&++deneme<60);
+  sorulanlar.add(a+'-'+b);
+  let n; do{n=NESNELER[rnd(0,NESNELER.length-1)]}while(n===oncekiNesne);
+  oncekiNesne=n;
+  return {a,b,c:a-b,nesne:n};
+}
+
+/* ---------- Nesneler ---------- */
+const objSvg=id=>`<svg class="obj" viewBox="0 0 100 100"><use href="#o-${id}"/></svg>`;
+const CIZGI='<svg class="cizgi" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="8" y1="10" x2="92" y2="90" stroke="#1a0606" stroke-width="10" stroke-linecap="round" vector-effect="non-scaling-stroke"/><line x1="8" y1="10" x2="92" y2="90" stroke="#ff5a5a" stroke-width="5" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
+function nesneCiz(){
+  const kap=$('nesneler'); kap.innerHTML='';
+  $('soru').classList.toggle('onluk',seviye===100);
+  const onluk=seviye===100, n=onluk?mevcut.a/10:mevcut.a;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='nesne'+(onluk?' cubuk':'');
+    d.innerHTML=(onluk?objSvg(mevcut.nesne).repeat(10):objSvg(mevcut.nesne))+CIZGI;
+    d.onclick=()=>{if(kilit&&!yanlisVar)return; sesHazirla(); d.classList.toggle('cizik'); sesTik()};
+    kap.appendChild(d);
+  }
+  yerlestir();
+}
+/* Ekrana göre yerleşim: üst satırlar eşit sayıda, son satırda kalanlar.
+   Dikeyde satırlar kısa (çok satır), yatayda uzun (az satır) olur. */
+function yerlestir(){
+  const kap=$('nesneler'), items=kap.children, n=items.length; if(!n) return;
+  const W=kap.clientWidth, H=kap.clientHeight; if(W<10||H<10) return;
+  const onluk=seviye===100;
+  const aw=onluk?10.4:1, ah=onluk?1.15:1, g=onluk?.2:.14, ust=onluk?40:120;
+  let en={k:0,c:1};
+  for(let c=1;c<=n;c++){
+    const r=Math.ceil(n/c);
+    const k=Math.min(W/(c*aw+(c-1)*g), H/(r*ah+(r-1)*g));
+    if(k>en.k+0.01) en={k,c};
+  }
+  const k=Math.min(en.k,ust), w=Math.floor(k*aw), h=Math.floor(k*ah), gap=Math.floor(k*g);
+  kap.style.gridTemplateColumns=`repeat(${en.c}, ${w}px)`;
+  kap.style.gap=gap+'px';
+  for(const it of items){it.style.width=w+'px';it.style.height=h+'px'}
+}
+if(window.ResizeObserver) new ResizeObserver(yerlestir).observe($('nesneler'));
+else addEventListener('resize',yerlestir);
+$('temizle').onclick=()=>{for(const d of $('nesneler').children) d.classList.remove('cizik'); sesTik()};
+
+/* ---------- Akış ---------- */
+let toastZ=null;
+function toast(metin,tur){const t=$('toast');t.textContent=metin;t.className='show '+(tur||'');clearTimeout(toastZ);toastZ=setTimeout(()=>t.className='',2200)}
+function cevapGoster(){$('cevap').textContent=giris||' ';$('tusOk').disabled=!giris||kilit}
+
+function sonraki(){
+  soruNo++;
+  if(soruNo>TUR){bitir();return}
+  mevcut=soruUret(); yanlisVar=false; giris='';
+  $('soruSayac').textContent=soruNo+'/'+TUR;
+  $('sayiA').textContent=mevcut.a; $('sayiB').textContent=mevcut.b;
+  $('cevap').className='';
+  $('ipucuMetin').textContent=seviye===100
+    ?'Her çubukta 10 var. Çıkardığın onluk kadar çubuğa dokun, kalanları onar onar say.'
+    :'İstersen çıkardığın sayı kadar nesneye dokun, üzerini çiz. Kalanları say.';
+  kilit=false; nesneCiz(); cevapGoster();
+}
+function kontrol(){
+  if(!giris||kilit) return;
+  const v=parseInt(giris,10), c=$('cevap');
+  if(v===mevcut.c){
+    kilit=true; c.className='dogru'; sesDogru(); cevapGoster();
+    if(!yanlisVar){ilkDenemeDogru++;kazanilan+=ODUL;toast('Harika! +'+ODUL+' altın','iyi');altinYagdir(ODUL)}
+    else toast('Doğru! Bu soruda altın yok ama başardın.','iyi');
+    setTimeout(sonraki,yanlisVar?1500:2300);
+  }else{
+    yanlisVar=true; kilit=true; sesYanlis();
+    c.className=''; void c.offsetWidth; c.className='yanlis'; cevapGoster();
+    toast(seviye===100?'Tekrar dene! Çubukların üzerini çizip kalanları sayabilirsin.':'Tekrar dene! Nesnelerin üzerini çizip kalanları sayabilirsin.','kotu');
+    setTimeout(()=>{giris='';c.className='';kilit=false;cevapGoster()},750);
+  }
+}
+function tus(t){
+  if(kilit) return; sesHazirla();
+  if(t==='ok'){kontrol();return}
+  if(t==='sil') giris=giris.slice(0,-1);
+  else{ if(giris.length>=3) return; if(giris==='0') giris=''; giris+=t; }
+  sesTik(); cevapGoster();
+}
+for(const b of document.querySelectorAll('.tus')) b.onclick=()=>tus(b.dataset.t);
+addEventListener('keydown',e=>{
+  if($('overlay').style.display!=='none') return;
+  if(/^[0-9]$/.test(e.key)) tus(e.key);
+  else if(e.key==='Backspace'){e.preventDefault();tus('sil')}
+  else if(e.key==='Enter'){e.preventDefault();tus('ok')}
+});
+
+/* ---------- Pencereler ---------- */
+const SEV_AD={10:"10'a kadar",20:"20'ye kadar",100:"100'e kadar"};
+function baslangic(){
+  kilit=true;
+  $('dialog').innerHTML=`<h1>ÇIKARMA YARDIMCISI</h1>
+    <p>Soruları çöz, altınları keseye doldur! İstersen nesnelere dokunup üzerlerini çizerek yardım alabilirsin.<br>İlk denemede bildiğin her soru <b>${ODUL} altın</b>.</p>
+    <div style="font-weight:800;color:#dff7ea">Seviyeni seç</div>
+    <div class="choices">
+      <button class="choice" data-s="10">10'a kadar</button>
+      <button class="choice" data-s="20">20'ye kadar</button>
+      <button class="choice" data-s="100">100'e kadar<small>onluklar</small></button>
+    </div>
+    <button class="primary" id="basla">BAŞLA</button>
+    <a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a>`;
+  const ch=[...document.querySelectorAll('.choice')];
+  const isaretle=()=>ch.forEach(b=>b.classList.toggle('active',+b.dataset.s===seviye));
+  ch.forEach(b=>b.onclick=()=>{seviye=+b.dataset.s;yaz(K_SEVIYE,seviye);isaretle()});
+  isaretle();
+  $('basla').onclick=turBaslat;
+  $('overlay').style.display='flex';
+}
+function turBaslat(){
+  sesHazirla();
+  soruNo=0;ilkDenemeDogru=0;kazanilan=0;sorulanlar.clear();
+  $('overlay').style.display='none';
+  sonraki();
+}
+function bitir(){
+  kilit=true; cevapGoster();
+  $('dialog').innerHTML=`<h1>TUR BİTTİ!</h1>
+    <p>${TUR} sorunun <b>${ilkDenemeDogru}</b> tanesini ilk denemede bildin.<br>
+    Bu turda <b>${kazanilan} altın</b> kazandın.<br>Kesende toplam <b>${altin} altın</b> var.</p>
+    <p style="margin-top:0">Seviye: ${SEV_AD[seviye]}</p>
+    <button class="primary" id="yeniTur">YENİ TUR</button>
+    <button class="secondary" id="seviyeDegis">Seviye değiştir</button>`;
+  $('yeniTur').onclick=turBaslat;
+  $('seviyeDegis').onclick=baslangic;
+  $('overlay').style.display='flex';
+}
+
+sesBtnGoster(); altinGoster(); baslangic();
+})();
+</script>
+</body>
+</html>
