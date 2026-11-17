@@ -1,173 +1,351 @@
 <!DOCTYPE html>
+
 <html lang="tr">
+
 <head>
+
 <meta charset="utf-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Practical Solutions In Kids Education</title>
+
 <!-- GoatCounter ziyaret sayacı -->
+
 <script data-goatcounter="https://agah.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+
 <style>
+
   :root{
+
     --zemin:#23c1ff;      /* sayfa arka planı */
+
     --cubuk:#ffffff;      /* menü çubuğu */
+
     --yazi:#177E89;       /* menü yazısı */
+
     --vurgu:#177E89;      /* açık menü / üzerine gelince */
+
     --acik:#e3f2f3;       /* alt menüde üzerine gelince */
+
   }
+
   *{box-sizing:border-box}
+
   body{margin:0;min-height:100vh;padding-bottom:40px;background:var(--zemin);font-family:'Noto Sans','Segoe UI',Arial,sans-serif}
 
+
+
   /* Başlık */
+
   header{text-align:center;padding:6px 12px 4px;color:#fff;font-family:'Brush Script MT',cursive}
+
   header .ust{font-size:clamp(24px,4.5vw,36px);font-weight:bold;margin:0}
+
   header .alt{font-size:clamp(13px,2vw,16px);font-weight:bold;margin:0;color:rgb(210,242,248)}
 
+
+
   /* Menü çubuğu */
+
   nav{background:var(--cubuk);margin-top:5px;box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;z-index:10}
+
   .menu{list-style:none;margin:0 auto;padding:0;max-width:900px;display:flex}
+
   .menu>li{position:relative}
+
   .menu a,.menu button{display:block;width:100%;padding:20px 22px;font:inherit;font-size:16px;color:var(--yazi);background:none;border:0;text-align:left;text-decoration:none;cursor:pointer;white-space:nowrap}
+
   .ders>button{padding-right:40px;position:relative}
+
   .ders>button::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+
   .ders.acik>button::after{transform:translateY(-30%) rotate(-135deg)}
+
   .menu>li>a:hover,.ders>button:hover,.ders.acik>button{background:var(--vurgu);color:#fff}
 
+
+
   /* Alt menü */
+
   .alt-menu{list-style:none;margin:0;padding:0;display:none;position:absolute;top:100%;left:0;min-width:300px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.18);border-top:3px solid var(--vurgu);transform-origin:top;animation:ac .18s ease-out}
+
   .ders.acik>.alt-menu{display:block}
+
   .alt-menu a{padding:14px 22px;border-bottom:1px solid #f0f0f0}
+
   .alt-menu a:hover{background:var(--acik);color:#000}
+
   .alt-menu .yakinda{padding:14px 22px;color:#90a4ae;font-style:italic}
+
   @keyframes ac{from{opacity:0;transform:scaleY(.6)}to{opacity:1;transform:scaleY(1)}}
 
+
+
   /* Telefon: menü butonu + açılır liste */
+
   .menu-ac{display:none}
+
   @media (max-width:760px){
+
     nav{background:none;box-shadow:none;padding:12px 16px}
+
     .menu-ac{display:block;width:100%;padding:12px;font:inherit;font-size:1.15em;font-weight:bold;color:#fff;background:var(--vurgu);border:0;border-radius:6px;cursor:pointer}
+
     .menu{display:none;flex-direction:column;margin-top:8px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+
     nav.mobil-acik .menu{display:flex}
+
     .menu>li{border-bottom:1px solid #eceff1}
+
     .menu a,.menu button{padding:16px 20px}
+
     .alt-menu{position:static;min-width:0;box-shadow:none;border-top:0;background:#f7fbfb;animation:none}
+
     .alt-menu a,.alt-menu .yakinda{padding-left:36px}
+
   }
 
+
+
   /* Alt bilgi: sürüm + sayaçlar */
+
   footer{position:fixed;z-index:1;left:0;right:0;bottom:0;padding:4px 10px;text-align:right;color:rgb(210,242,248);font:bold 12px Arial,sans-serif}
+
 </style>
+
 </head>
+
 <body>
 
+
+
 <header>
+
   <p class="ust">Practical Solutions In Kids Education</p>
+
   <p class="alt">Küçüklerin Eğitiminde Pratik Çözümler</p>
+
 </header>
 
+
+
 <nav id="nav">
+
   <button class="menu-ac" id="menuAc" aria-expanded="false">☰ Ana Menü</button>
+
   <ul class="menu">
 
+
+
     <li class="ders">
+
       <button aria-expanded="false">Türkçe</button>
+
       <ul class="alt-menu">
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/okuma-yardimcisi.html">Okuma Yardımcısı</a></li>
+
       </ul>
+
     </li>
 
+
+
     <li class="ders">
+
       <button aria-expanded="false">Matematik</button>
+
       <ul class="alt-menu">
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/mat_saat.html">Saatleri Okumayı Öğrenelim</a></li>
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/ritmik-sayma.html">Ritmik Sayma Oyunu</a></li>
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/galaktik-kalkan.html">Galaktik Kalkan (Toplama Oyunu)</a></li>
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/cikarma-yardimcisi.html">Çıkarma Yardımcısı</a></li>
+
         <li><a href="https://agahakbatur.github.io/ogreticiler/dinozorlar-vadisi.html">Dinozorlar Vadisi (Çıkarma Oyunu)</a></li>
+
+        <li><a href="https://agahakbatur.github.io/ogreticiler/carpma-arabasi.html">Çarpma Arabası (Çarpma Oyunu)</a></li>
+
       </ul>
+
     </li>
 
+
+
     <li class="ders">
+
       <button aria-expanded="false">Fen Bilgisi</button>
+
       <ul class="alt-menu">
+
         <li class="yakinda">Yakında eklenecek</li>
+
       </ul>
+
     </li>
 
+
+
     <li class="ders">
+
       <button aria-expanded="false">Sosyal Bilgiler</button>
+
       <ul class="alt-menu">
+
         <li class="yakinda">Yakında eklenecek</li>
+
       </ul>
+
     </li>
+
+
 
     <li><a href="https://agahakbatur.github.io/ogreticiler/about.html">Hakkında</a></li>
+
   </ul>
+
 </nav>
 
-<footer>v0.95 <span id="idZiyaretciSayaci"></span></footer>
+
+
+<footer>v0.96 <span id="idZiyaretciSayaci"></span></footer>
+
+
 
 <script>
+
   // Menü: ders adına tıklayınca (masaüstünde üzerine gelince de) alt menü açılır
+
   (function () {
+
     var nav = document.getElementById('nav');
+
     var dersler = Array.prototype.slice.call(document.querySelectorAll('.ders'));
+
     var genis = window.matchMedia('(min-width:761px) and (hover:hover)');
 
+
+
     function kapatHepsi(haric) {
+
       dersler.forEach(function (d) {
+
         if (d !== haric) { d.classList.remove('acik'); d.firstElementChild.setAttribute('aria-expanded', 'false'); }
+
       });
+
     }
+
     function ac(d, durum) {
+
       d.classList.toggle('acik', durum);
+
       d.firstElementChild.setAttribute('aria-expanded', durum ? 'true' : 'false');
+
     }
+
+
 
     dersler.forEach(function (d) {
+
       d.firstElementChild.addEventListener('click', function () {
+
         var acilsin = !d.classList.contains('acik');
+
         kapatHepsi(d); ac(d, acilsin);
+
       });
+
       d.addEventListener('mouseenter', function () { if (genis.matches) { kapatHepsi(d); ac(d, true); } });
+
       d.addEventListener('mouseleave', function () { if (genis.matches) ac(d, false); });
+
     });
+
+
 
     // Telefonda "Ana Menü" butonu
+
     var menuAc = document.getElementById('menuAc');
+
     menuAc.addEventListener('click', function () {
+
       var acik = nav.classList.toggle('mobil-acik');
+
       menuAc.setAttribute('aria-expanded', acik ? 'true' : 'false');
+
       if (!acik) kapatHepsi(null);
+
     });
+
+
 
     // Menü dışına tıklayınca ya da Esc'e basınca kapat
+
     document.addEventListener('click', function (e) { if (!nav.contains(e.target)) { kapatHepsi(null); } });
+
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') kapatHepsi(null); });
+
   })();
+
+
 
   // Sayfaların ziyaret sayılarını sürüm numarasının yanında göster
+
   (function () {
+
     var SAYFALAR = [
+
       { ad: 'Saat okuyucu',       yol: '/ogreticiler/mat_saat.html' },
+
       { ad: 'Okuma yardımcısı',   yol: '/ogreticiler/okuma-yardimcisi.html' },
+
       { ad: 'Ritmik sayma',       yol: '/ogreticiler/ritmik-sayma.html' },
+
       { ad: 'Galaktik kalkan',    yol: '/ogreticiler/galaktik-kalkan.html' },
+
       { ad: 'Çıkarma yardımcısı', yol: '/ogreticiler/cikarma-yardimcisi.html' },
-      { ad: 'Dinozorlar vadisi',  yol: '/ogreticiler/dinozorlar-vadisi.html' }
+
+      { ad: 'Dinozorlar vadisi',  yol: '/ogreticiler/dinozorlar-vadisi.html' },
+
+      { ad: 'Çarpma arabası',     yol: '/ogreticiler/carpma-arabasi.html' }
+
     ];
 
+
+
     function sayiAl(yol) {
+
       return fetch('https://agah.goatcounter.com/counter/' + encodeURIComponent(yol) + '.json')
+
         .then(function (r) { return r.ok ? r.json() : { count: '0' }; }) // henüz ziyaret yoksa 0
+
         .then(function (d) { return d.count || '0'; })
+
         .catch(function () { return '–'; });
+
     }
 
+
+
     Promise.all(SAYFALAR.map(function (s) { return sayiAl(s.yol); })).then(function (sayilar) {
+
       var metin = SAYFALAR.map(function (s, i) { return s.ad + ': ' + sayilar[i]; }).join(', ');
+
       document.getElementById('idZiyaretciSayaci').textContent = '  ' + metin;
+
     });
+
   })();
+
 </script>
+
 </body>
+
 </html>
+
+                                                                                 
