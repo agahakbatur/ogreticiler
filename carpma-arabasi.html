@@ -31,7 +31,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 #chips{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
 .chip{background:#ffffffd9;border:3px solid #ffffff;border-radius:12px;text-align:center;font-weight:900;font-size:clamp(18px,min(4.5vw,5.5vh),34px);padding:1px 0;color:#1f2433}
 .chip.me{border-color:#ffc83d;background:#fff4c7}
-#toast{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);background:#fffaf0;border:3px solid #1f2433;padding:6px 16px;border-radius:999px;font-weight:900;font-size:clamp(14px,2.4vw,22px);opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap;z-index:3}
+#toast{position:absolute;top:80%;left:50%;transform:translate(-50%,-50%);max-width:calc(100% - 2*clamp(76px,17vmin,132px));overflow:hidden;text-overflow:ellipsis;background:#fffaf0;border:3px solid #1f2433;padding:6px 16px;border-radius:999px;font-weight:900;font-size:clamp(14px,2.4vw,22px);opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap;z-index:3}
 #toast.show{opacity:1}#toast.good{border-color:var(--green);color:#167a3a}#toast.bad{border-color:var(--red);color:#b42318}#toast.gold{border-color:#d99a00;color:#9a5b00}
 .ctrl{position:absolute;bottom:3%;width:clamp(66px,15vmin,120px);height:clamp(66px,15vmin,120px);border-radius:50%;border:4px solid #fff;background:#1f2433a6;color:#fff;display:flex;align-items:center;justify-content:center;z-index:4;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .ctrl:active,.ctrl.down{background:#ffc83dd0;color:#1f2433}
@@ -207,6 +207,8 @@ function resize() {
   const span = portrait ? W * 0.98 : Math.min(W * 0.8, H * 1.25);   // oyuncu hizasında yol genişliği
   K = span * ZP / (2 * RW * F);
   cx = W / 2;
+  // Bilgi mesajları ("Doğru!", "TURBO!") yolu örtmesin: aracın altı ile ekranın altı arasına ortalanır
+  $('toast').style.top = Math.round((yH + F / ZP + H) / 2) + 'px';
 }
 new ResizeObserver(resize).observe(cv);
 
@@ -766,7 +768,8 @@ function menu() {
     <div class="grp"><div class="t">Yolda engeller</div><div class="opts c2">${optBtns('obst', [[0, 'Kapalı', 'sadece sorular'], [1, 'Açık', 'engellerden kaç']], cfg.obst)}</div></div>
     <div class="grp" id="obstLvGrp" style="display:${cfg.obst ? 'block' : 'none'}"><div class="t">Engel zorluğu</div><div class="opts c3">${optBtns('obstLv', [[1, '1', 'az engel'], [2, '2', 'biraz daha fazla'], [3, '3', 'çok engel + yol kapalı']], cfg.obstLv)}</div></div>
     <p style="font-size:12px;color:#6b6250">50 doğru cevapla yarışı bitir · Her 5 doğru: hız +%10 · Her yanlış: hız −%10 · Her 10 doğru: +1 can</p>
-    ${skorVar() ? '<button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>' : ''}
+    ${skorVar() ? `<div class="grp" style="text-align:center"><div class="t" style="text-align:center">Oyuncu</div><span id="oyuncuAd" style="font-weight:900;font-size:17px">${oyuncuMetni()}</span> <button id="adBtn" style="display:inline-block;padding:6px 12px;margin-left:6px;border:2px solid #e2c98a;border-radius:10px;background:#fff;font-weight:900;cursor:pointer">${window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç'}</button></div>
+    <button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>` : ''}
     <div class="sticky"><button class="primary" id="go" style="margin-top:0">YARIŞA BAŞLA 🏁</button></div>`;
   $('overlay').style.display = 'flex';
   $('dialog').querySelectorAll('.opt').forEach(b => b.onclick = () => {
@@ -780,8 +783,16 @@ function menu() {
     const x = c.getContext('2d'); x.scale(d, d);
     withCtx(x, () => drawKart(r.width / 2, r.height - 4, Math.min(r.width * .6, r.height * 1.2), CARS[+c.dataset.car], 0, false));
   });
-  $('go').onclick = startRace;
+  // Ad oyunun başında seçilir; seçilmemişse önce ad penceresi açılır, sonra yarış başlar
+  $('go').onclick = async () => {
+    if (skorVar() && !window.Skor.oyuncu()) await window.Skor.adSor(skorBilgi());
+    if (mode === 'menu') startRace();
+  };
   if ($('recBtn')) $('recBtn').onclick = rekorlar;
+  if ($('adBtn')) $('adBtn').onclick = async () => {
+    await (window.Skor.oyuncu() ? window.Skor.adDegistir(skorBilgi()) : window.Skor.adSor(skorBilgi()));
+    $('oyuncuAd').textContent = oyuncuMetni(); $('adBtn').textContent = window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç';
+  };
 }
 function withCtx(c, fn) { const old = ctx; ctx = c; try { fn(); } finally { ctx = old; } }
 
@@ -813,6 +824,7 @@ function togglePause() {
 const DIFF_AD = { kolay: 'Kolay', orta: 'Orta', zor: 'Zor' };
 function skorBilgi() { return { oyun: 'carpma', oyunAd: 'Çarpma Arabası', liste: cfg.type + '-' + cfg.diff, listeAd: cfg.type + ' içinde · ' + DIFF_AD[cfg.diff] }; }
 const skorVar = () => !!(window.Skor && window.Skor.kurulu);
+function oyuncuMetni() { const o = skorVar() && window.Skor.oyuncu(); return o ? o.e + ' ' + o.ad : 'Ad seçilmedi'; }
 function rekorlar() { if (skorVar()) window.Skor.listeGoster(skorBilgi()); }
 
 function finish(won) {
