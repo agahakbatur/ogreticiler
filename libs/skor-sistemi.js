@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const ADRES = 'BURAYA_WEB_UYGULAMASI_ADRESINI_YAPISTIRIN';   // örn: https://script.google.com/macros/s/AKfy..../exec
+const ADRES = 'https://script.google.com/macros/s/AKfycbz_pGKUhdyUgaizkAxlXyj4lTKmQP5z9F0dDQFtxojxidp8PVx8Re8Kvuqko8W6a0mQSg/exec';   // örn: https://script.google.com/macros/s/AKfy..../exec
 
 // ---- Takma adlar (Kod.gs içindeki liste ile AYNI olmalı) ----
 const SIFATLAR = ['Hızlı', 'Neşeli', 'Cesur', 'Minik', 'Akıllı', 'Şirin', 'Güçlü', 'Çevik', 'Parlak', 'Sevimli',
