@@ -457,6 +457,52 @@
                 linear-gradient(to right, rgba(0,137,123,0.18), rgba(0,137,123,0) 25%, rgba(0,137,123,0) 75%, rgba(0,137,123,0.18));
         }
         .board-vp.zoomdrag .edge-band { opacity: 1; }
+        .board-mid {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .board-container.side .board-mid {
+            width: auto;
+            flex: 0 0 auto;
+        }
+
+        /* TELEFON · 100 İÇİNDE: başlık en üstte, kartlar en altta, kartela arada.
+           Durgunken kartela ortada durur (boşluk üstüne ve altına dağılır);
+           yakınlaşınca aradaki alanın tamamına yayılır. */
+        #gameScreen.fill {
+            height: calc(100vh - 20px);
+            height: calc(100dvh - 20px);
+            justify-content: flex-start;
+        }
+        #gameScreen.fill .header {
+            flex: 0 0 auto;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            gap: 6px;
+        }
+        #gameScreen.fill .board-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            gap: 8px;
+        }
+        #gameScreen.fill .board-container .board-mid {
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 0;
+        }
+        #gameScreen.fill .board-vp {
+            width: 100%;
+            height: 100%;
+        }
+        #gameScreen.fill .board-vp .drop-zone-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #gameScreen.fill .cards-container {
+            flex: 0 0 auto;
+        }
         .mini {
             position: absolute;
             right: 6px;
@@ -627,10 +673,12 @@
         </div>
 
         <div class="board-container">
-            <!-- BOŞ KARTELA -->
-            <div class="board-vp" id="boardVp">
-                <div class="drop-zone-container" id="dropZoneContainer"></div>
-                <div class="edge-band"></div>
+            <!-- BOŞ KARTELA (orta bölge: telefonda başlık ile kartlar arasındaki boşluğu kaplar) -->
+            <div class="board-mid" id="boardMid">
+                <div class="board-vp" id="boardVp">
+                    <div class="drop-zone-container" id="dropZoneContainer"></div>
+                    <div class="edge-band"></div>
+                </div>
             </div>
             
             <!-- KARIŞIK KARTLAR -->
@@ -824,6 +872,8 @@
 
             board.classList.toggle('side', many);
             screen.classList.toggle('wide', many);
+            // Telefonda 100 içinde: başlık üstte, kartlar altta, kartela aradaki boşlukta
+            screen.classList.toggle('fill', gameMode === 'yuz' && window.innerWidth <= 760);
 
             if (gameMode !== 'yuz') {
                 board.style.removeProperty('--box');
@@ -871,6 +921,8 @@
         const CALM = 0.5;           // ortadaki sakin bölge (pencerenin yarısı)
         const LOCK_MS = 300;        // boş kutu üstünde bekleyince kaymayı durdurma süresi
         let VW = 0, VH = 0, zoomMax = 1, MW = 64, MH = 64;
+        let PW = 0, PH = 0;          // tahta penceresinin boyu (telefonda 100 içinde: aradaki alanın tamamı)
+        const isFill = () => document.getElementById('gameScreen').classList.contains('fill');
         let view = { s: 1, tx: 0, ty: 0 }, goal = { s: 1, tx: 0, ty: 0 };
         const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -878,12 +930,19 @@
         function measureBoard() {
             const vp = document.getElementById('boardVp');
             const drop = document.getElementById('dropZoneContainer');
-            view = { s: 1, tx: 0, ty: 0 }; goal = { s: 1, tx: 0, ty: 0 };
             drop.style.transform = '';
             vp.style.width = ''; vp.style.height = '';
             VW = drop.offsetWidth; VH = drop.offsetHeight;
-            vp.style.width = VW + 'px';
-            vp.style.height = VH + 'px';
+            if (isFill()) {
+                // Pencere aradaki alanın tamamıdır; kartela durgunken ortada durur
+                PW = vp.clientWidth; PH = vp.clientHeight;
+            } else {
+                vp.style.width = VW + 'px';
+                vp.style.height = VH + 'px';
+                PW = VW; PH = VH;
+            }
+            goal = { s: 1, tx: 0, ty: 0 }; clampGoal();
+            view = { s: 1, tx: goal.tx, ty: goal.ty };
             const firstBox = drop.querySelector('.drop-box');
             const boxPx = firstBox ? firstBox.offsetWidth : 80;
             const minBox = window.innerWidth >= 1000 ? MIN_BOX_LARGE : MIN_BOX_TOUCH;
@@ -901,10 +960,14 @@
             applyView();
         }
 
-        function clampT(t, s, size) { return Math.min(0, Math.max(size - size * s, t)); }
+        // Kartela pencereden küçükse ortalanır, büyükse pencere dışına taşmayacak şekilde sınırlanır
+        function clampT(t, s, size, win) {
+            const c = size * s;
+            return c <= win ? (win - c) / 2 : Math.min(0, Math.max(win - c, t));
+        }
         function clampGoal() {
-            goal.tx = clampT(goal.tx, goal.s, VW);
-            goal.ty = clampT(goal.ty, goal.s, VH);
+            goal.tx = clampT(goal.tx, goal.s, VW, PW);
+            goal.ty = clampT(goal.ty, goal.s, VH, PH);
         }
         function applyView() {
             const drop = document.getElementById('dropZoneContainer');
@@ -916,10 +979,11 @@
             if (zoomed && VW) {
                 const mw = MW, mh = MH;
                 const mv = document.getElementById('miniView');
-                mv.style.left = (3 + -view.tx / (VW * view.s) * mw) + 'px';
-                mv.style.top = (3 + -view.ty / (VH * view.s) * mh) + 'px';
-                mv.style.width = (mw / view.s) + 'px';
-                mv.style.height = (mh / view.s) + 'px';
+                const cw = VW * view.s, ch = VH * view.s;   // görünen bölgenin kartela içindeki payı
+                mv.style.left = (3 + Math.max(0, -view.tx) / cw * mw) + 'px';
+                mv.style.top = (3 + Math.max(0, -view.ty) / ch * mh) + 'px';
+                mv.style.width = (Math.min(PW, cw) / cw * mw) + 'px';
+                mv.style.height = (Math.min(PH, ch) / ch * mh) + 'px';
             }
         }
         function zoomAround(s, cx, cy) {
@@ -929,7 +993,15 @@
             goal.s = s; goal.tx = ax - wx * s; goal.ty = ay - wy * s;
             clampGoal();
         }
-        function zoomOut() { goal.s = 1; goal.tx = 0; goal.ty = 0; }
+        function zoomOut() { goal.s = 1; goal.tx = 0; goal.ty = 0; clampGoal(); }
+
+        // Kartlar yerleştikçe alttaki kart alanı küçülür; aradaki alan büyür, kartela yeniden ortalanır
+        new ResizeObserver(() => {
+            if (!isFill() || !VW) return;
+            const vp = document.getElementById('boardVp');
+            PW = vp.clientWidth; PH = vp.clientHeight;
+            clampGoal();
+        }).observe(document.getElementById('boardVp'));
 
         function buildMini() {
             const n = sequence.length;
@@ -1113,7 +1185,6 @@
                 dropContainer.appendChild(box);
             });
 
-            measureBoard();
             buildMini();
 
             const toPlace = sequence.filter((v, i) => blankSet.has(i));
@@ -1137,6 +1208,7 @@
                 card.addEventListener('dragstart', ev => ev.preventDefault());
                 cardsContainer.appendChild(card);
             });
+            measureBoard();   // kart alanı dolduktan sonra: aradaki alanın gerçek boyu belli olur
         }
 
         // DRAG & DROP SİSTEMİ (POINTER EVENTS)
