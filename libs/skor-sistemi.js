@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const ADRES = 'https://script.google.com/macros/s/AKfycbz_pGKUhdyUgaizkAxlXyj4lTKmQP5z9F0dDQFtxojxidp8PVx8Re8Kvuqko8W6a0mQSg/exec';   // örn: https://script.google.com/macros/s/AKfy..../exec
+const ADRES = 'BURAYA_WEB_UYGULAMASI_ADRESINI_YAPISTIRIN';   // örn: https://script.google.com/macros/s/AKfy..../exec
 
 // ---- Takma adlar (Kod.gs içindeki liste ile AYNI olmalı) ----
 const SIFATLAR = ['Hızlı', 'Neşeli', 'Cesur', 'Minik', 'Akıllı', 'Şirin', 'Güçlü', 'Çevik', 'Parlak', 'Sevimli',
@@ -165,7 +165,7 @@ async function adSec(o, sonra) {
   bekle(o, 'Adlar yükleniyor…');
   let alinan;
   try { const r = await istek({ islem: 'adlar' }, true); if (!r.ok) throw 0; alinan = new Set(r.alinan); }
-  catch (e) { return mesaj(o, 'İnternete bağlanılamadı, ad listesi açılamıyor.<br>Puanın bu sefer kaydedilemedi.'); }
+  catch (e) { return mesaj(o, o.basta ? 'İnternete bağlanılamadı, ad listesi açılamıyor.<br>Ad seçmeden oynayabilirsin.' : 'İnternete bağlanılamadı, ad listesi açılamıyor.<br>Puanın bu sefer kaydedilemedi.'); }
 
   let sekme = 'yeni';
   const ciz = () => {
@@ -177,12 +177,12 @@ async function adSec(o, sonra) {
     document.querySelectorAll('#skr .ad[data-no]').forEach(b => b.onclick = () => sekme === 'yeni' ? onayla(+b.dataset.no) : kodSor(+b.dataset.no));
   };
   const bosSay = ADLAR.length - alinan.size;
-  pencere('<h2>👾 ADINI SEÇ</h2><div class="alt">Puanın rekor listesine bu adla yazılır.</div>',
+  pencere(`<h2>👾 ADINI SEÇ</h2><div class="alt">${o.basta ? 'Oyuna başlamadan adını seç. ' : ''}Puanın rekor listesine bu adla yazılır.</div>`,
     `<div class="sekme"><button class="on" data-s="yeni">Yeni ad seç</button><button data-s="var">Benim adım var</button></div>
      <input type="search" placeholder="🔍 Ara… (ör: kartal)" autocomplete="off" enterkeyhint="search">
      <div class="alt" id="skr-bilgi" style="margin-top:6px">${bosSay} ad boşta. Gri adlar başkasına ait.</div>
      <div class="izgara"></div>`,
-    '<button class="bt ik" data-k="kapat">Kaydetmeden kapat</button>');
+    `<button class="bt ik" data-k="kapat">${o.basta ? 'Ad seçmeden oyna' : 'Kaydetmeden kapat'}</button>`);
   $('[data-k="kapat"]').onclick = kapat;
   $('input').oninput = ciz;
   document.querySelectorAll('#skr .sekme button').forEach(b => b.onclick = () => {
@@ -210,7 +210,7 @@ async function adSec(o, sonra) {
   function kodGoster(no, kod) {
     pencere('<h2>🔑 GİZLİ KODUN</h2>', `<div class="kim">${adGoster(no)}</div><div class="buyuk">${kod}</div>
       <p>Bu kodu bir yere yaz ya da öğretmenine söyle.<br>Başka bir cihazda adını kullanmak için gerekir.<br>Bu cihaz seni hatırlayacak.</p>`,
-      '<button class="bt" data-k="tamam">Tamam, devam</button>');
+      `<button class="bt" data-k="tamam">${o.basta ? 'Tamam, oyuna başla' : 'Tamam, devam'}</button>`);
     $('[data-k="tamam"]').onclick = sonra;
   }
   function kodSor(no) {
@@ -281,6 +281,17 @@ window.Skor = {
       kuyruguGonder().finally(() => kaydet(o));
     });
   },
+  // Oyun başında ad seçtirir. Ad zaten seçiliyse hemen döner. Sonuç: { no, ad, e } ya da null (adsız oynuyor)
+  adSor(o) {
+    return new Promise(res => {
+      if (!KURULU) return res(null);
+      if (kimlik()) return res(this.oyuncu());
+      kapanis = () => res(this.oyuncu());
+      adSec(Object.assign({}, o, { basta: true }), kapat);
+    });
+  },
+  adDegistir(o) { hafiza.sil('skorKimlik'); return this.adSor(o); },
+  oyuncu() { const k = kimlik(); return k ? { no: k.no, ad: ADLAR[k.no].ad, e: ADLAR[k.no].e } : null; },
   listeGoster(o) {
     return new Promise(res => { if (!KURULU) return res(); kapanis = res; listeAc(o); });
   },
