@@ -43,6 +43,12 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 .brandwrap{display:flex;align-items:center;gap:8px}
 @media(max-height:520px){#app{padding:6px;gap:5px}header{min-height:34px}.stat{padding:4px 7px}#bottom{gap:4px}.answer{min-height:44px;padding:5px}.dialog{padding:14px}.dialog p{margin:6px 0 10px}}
 @media(orientation:portrait){#app{height:100dvh;width:100vw;padding:8px}#gameWrap{min-height:220px}.stat{padding:5px 7px}}
+.oyuncu{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 0;padding:7px 10px;background:#101b3b;border:1px solid #49649a;border-radius:12px}
+.oyuncu .t{font-weight:800;font-size:13px;color:#a9b6d8}
+.oyuncu b{font-size:16px;color:var(--gold)}
+.oyuncu button,.recbtn{padding:6px 12px;border:1px solid #49649a;border-radius:10px;background:#172348;color:#dceaff;font-weight:800;font-size:13px;cursor:pointer}
+.recbtn{display:block;width:100%;margin-top:8px;padding:9px;font-size:14px}
+.skor-not{font-size:11px!important;color:#7f8db3!important;margin:10px 0 0!important}
 #topQuestion {
     flex: 1;
     text-align: center;
@@ -56,7 +62,7 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 <body>
 <div id="app">
 <header>
-  <div class="brandwrap"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">✦ GALAKTİK KALKAN</div></div>
+  <div class="brandwrap"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">✦ GALAKTİK KALKAN <span style="font-size:.6em;opacity:.8;letter-spacing:0">v1.00</span></div></div>
   <div id="topQuestion"></div>
   <div class="stats">
     <div class="stat">BÖLÜM <b id="wave">1</b></div>
@@ -70,6 +76,7 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
   <div id="overlay">
     <div class="dialog" id="dialog">
       <h1>GALAKTİK KALKAN</h1>
+      <div id="oyuncuYer"></div>
       <p>Uzay üssünü koru! Bir gemiye dokun, üzerindeki toplama işlemini çöz ve lazeri ateşle. Aynı anda birden fazla gemi yaklaşacak!</p>
       <div style="font-weight:800;color:#dceaff">Zorluk seviyesini seç</div>
       <div class="choices">
@@ -79,6 +86,7 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
       </div>
       <button class="primary" id="start">SAVUNMAYI BAŞLAT</button>
       <p style="font-size:11px;margin-bottom:0">Çevrimdışı oynanır · Dokunmatik ve fare destekli</p>
+      <div id="skorNot"></div>
     </div>
   </div>
   <div id="toast"></div>
@@ -91,6 +99,8 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 </div>
 <footer><span>Bir gemi seç → doğru sonucu bul → lazeri ateşle</span><button class="smallbtn" id="pause">Ⅱ Duraklat</button></footer>
 </div>
+<!-- Ortak rekor tablosu (dosya yoksa ya da kurulmadıysa oyun yine çalışır) -->
+<script src="/ogreticiler/libs/skor-sistemi.js"></script>
 <script>
 (()=>{
 const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
@@ -124,9 +134,26 @@ $('topQuestion').textContent = selected
 if(!selected){answerBtns.forEach(b=>{b.textContent='?';b.disabled=true});$('questionPrompt').textContent='Bir hedef gemi seç.';return;}question=selected.q;answerBtns.forEach((b,i)=>{b.textContent=question.arr[i];b.disabled=false});$('questionPrompt').textContent=question.a+' + '+question.b+' = ?';}
 function startGame(){score=0;hp=3;wave=1;combo=1;ships=[];shots=[];sparks=[];selected=null;paused=false;running=true;spawnTimer=0;for(let i=0;i<3;i++)spawn();$('overlay').style.display='none';$('pause').textContent='Ⅱ Duraklat';setHud();updateAnswers();}
 document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));b.classList.add('active');level=+b.dataset.level;}));
-$('start').addEventListener('click',startGame);
+// ---------- Rekor listesi (libs/skor-sistemi.js) ----------
+// Başlangıç seviyesi aynı olanlar kendi aralarında yarışır: 10, 20, 100
+let startLevel=10;
+const skorVar=()=>!!(window.Skor&&window.Skor.kurulu);
+const LEVEL_AD={10:"10'a kadar",20:"20'ye kadar",100:"100'e kadar"};
+function skorBilgi(){return {oyun:'galaktik',oyunAd:'Galaktik Kalkan',liste:String(startLevel),listeAd:'Toplama · '+LEVEL_AD[startLevel]};}
+function oyuncuMetni(){const o=skorVar()&&window.Skor.oyuncu();return o?o.e+' '+o.ad:'Ad seçilmedi';}
+function rekorlar(){if(skorVar())window.Skor.listeGoster(skorBilgi());}
+function oyuncuCiz(){
+  if(!skorVar()){$('skorNot').innerHTML=`<p class="skor-not">${window.Skor?'Rekor tablosu kapalı: skor-sistemi.js dosyasına tablo adresi girilmemiş.':'Rekor tablosu kapalı: skor-sistemi.js dosyası bulunamadı.'}</p>`;return;}
+  $('oyuncuYer').innerHTML=`<div class="oyuncu"><span class="t">Oyuncu</span><b id="oyuncuAd">${oyuncuMetni()}</b><button id="adBtn">${window.Skor.oyuncu()?'Değiştir':'Ad seç'}</button></div><button class="recbtn" id="recBtn">🏆 Rekorlar (seviyeye göre)</button>`;
+  $('recBtn').onclick=()=>{startLevel=level;rekorlar();};
+  $('adBtn').onclick=async()=>{await (window.Skor.oyuncu()?window.Skor.adDegistir(skorBilgi()):window.Skor.adSor(skorBilgi()));$('oyuncuAd').textContent=oyuncuMetni();$('adBtn').textContent=window.Skor.oyuncu()?'Değiştir':'Ad seç';};
+}
+oyuncuCiz();
+// Ad oyunun başında seçilir; seçilmemişse önce ad penceresi açılır
+$('start').addEventListener('click',async()=>{startLevel=level;if(skorVar()&&!window.Skor.oyuncu())await window.Skor.adSor(skorBilgi());startGame();});
 $('pause').addEventListener('click',()=>{if(!running)return;paused=!paused;$('pause').textContent=paused?'▶ Devam':'Ⅱ Duraklat';toast(paused?'Oyun duraklatıldı':'Devam!');});
-function gameOver(){running=false;selected=null;updateAnswers();$('dialog').innerHTML=`<h1>ÜS SAVUNMASI BİTTİ</h1><p>Toplam puanın: <b style="color:#ffd66b">${score}</b><br>Ulaştığın bölüm: <b>${wave}</b></p><button class="primary" id="again">YENİDEN DENE</button><p style="font-size:11px">Daha iyi bir sonuç için tekrar savaşabilirsin.</p>`;$('overlay').style.display='flex';$('again').onclick=()=>location.reload();}
+function gameOver(){if(!running)return;running=false;selected=null;updateAnswers();$('dialog').innerHTML=`<h1>ÜS SAVUNMASI BİTTİ</h1><p>Toplam puanın: <b style="color:#ffd66b">${score}</b><br>Ulaştığın bölüm: <b>${wave}</b></p><button class="primary" id="again">YENİDEN DENE</button>${skorVar()?'<button class="recbtn" id="recBtn">🏆 Rekorlar</button>':''}<p style="font-size:11px">Daha iyi bir sonuç için tekrar savaşabilirsin.</p>`;$('overlay').style.display='flex';$('again').onclick=()=>location.reload();if($('recBtn'))$('recBtn').onclick=rekorlar;
+if(skorVar()&&score>0)window.Skor.oyunBitti(Object.assign(skorBilgi(),{puan:score,detay:wave+'. bölüme ulaştı'}));}
 function choose(i){if(!running||paused||!selected)return;const val=selected.q.arr[i];if(val===selected.q.sum){const s=selected;shots.push({x:Math.min(W*.25,190),y:H*.55,tx:s.x,ty:s.y,t:0,ship:s});sparks.push({x:s.x,y:s.y,life:.35,good:true});score+=10*combo;combo=Math.min(combo+1,5);toast('DOĞRU! LAZER ATEŞLENDİ');ships=ships.filter(x=>x!==s);selected=null;if(score>0&&score%900===0){wave++;level=Math.min(100,level+5);toast('YENİ BÖLÜM!');}setHud();updateAnswers();}else{combo=1;selected.q={...selected.q};setHud();toast('Tekrar dene! Gemi yaklaşıyor.');}}
 answerBtns.forEach((b,i)=>b.addEventListener('click',()=>choose(i)));
 function pointer(e){if(!running||paused)return;const r=canvas.getBoundingClientRect();const x=(e.clientX-r.left),y=(e.clientY-r.top);let hit=null;for(let i=ships.length-1;i>=0;i--){let s=ships[i];if(Math.hypot(x-s.x,y-s.y)<43){hit=s;break;}}if(hit){selected=hit;updateAnswers();toast('Hedef seçildi! İşlemi çöz.');}}
