@@ -66,7 +66,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <body>
 <div id="app">
 <header>
-  <div class="left"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🏎️ ÇARPMA ARABASI</div></div>
+  <div class="left"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🏎️ ÇARPMA ARABASI <span style="font-size:.6em;opacity:.8;letter-spacing:0">v1.00</span></div></div>
   <div class="stats">
     <div class="stat" id="lives">❤❤❤</div>
     <div class="stat">DOĞRU <b id="sCorrect">0/50</b></div>
@@ -769,7 +769,7 @@ function menu() {
     <div class="grp" id="obstLvGrp" style="display:${cfg.obst ? 'block' : 'none'}"><div class="t">Engel zorluğu</div><div class="opts c3">${optBtns('obstLv', [[1, '1', 'az engel'], [2, '2', 'biraz daha fazla'], [3, '3', 'çok engel + yol kapalı']], cfg.obstLv)}</div></div>
     <p style="font-size:12px;color:#6b6250">50 doğru cevapla yarışı bitir · Her 5 doğru: hız +%10 · Her yanlış: hız −%10 · Her 10 doğru: +1 can</p>
     ${skorVar() ? `<div class="grp" style="text-align:center"><div class="t" style="text-align:center">Oyuncu</div><span id="oyuncuAd" style="font-weight:900;font-size:17px">${oyuncuMetni()}</span> <button id="adBtn" style="display:inline-block;padding:6px 12px;margin-left:6px;border:2px solid #e2c98a;border-radius:10px;background:#fff;font-weight:900;cursor:pointer">${window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç'}</button></div>
-    <button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>` : ''}
+    <button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>` : `<p style="font-size:11px;color:#9a8f78;margin:10px 0 0">${window.Skor ? 'Rekor tablosu kapalı: skor-sistemi.js dosyasına tablo adresi girilmemiş.' : 'Rekor tablosu kapalı: skor-sistemi.js dosyası bulunamadı.'}</p>`}
     <div class="sticky"><button class="primary" id="go" style="margin-top:0">YARIŞA BAŞLA 🏁</button></div>`;
   $('overlay').style.display = 'flex';
   $('dialog').querySelectorAll('.opt').forEach(b => b.onclick = () => {
