@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const ADRES = 'https://script.google.com/macros/s/AKfycbz_pGKUhdyUgaizkAxlXyj4lTKmQP5z9F0dDQFtxojxidp8PVx8Re8Kvuqko8W6a0mQSg/exec';   // örn: https://script.google.com/macros/s/AKfy..../exec
+const ADRES = 'BURAYA_WEB_UYGULAMASI_ADRESINI_YAPISTIRIN';   // örn: https://script.google.com/macros/s/AKfy..../exec
 
 // ---- Takma adlar (Kod.gs içindeki liste ile AYNI olmalı) ----
 const SIFATLAR = ['Hızlı', 'Neşeli', 'Cesur', 'Minik', 'Akıllı', 'Şirin', 'Güçlü', 'Çevik', 'Parlak', 'Sevimli',
@@ -154,7 +154,7 @@ function tabloGoster(o, r, yeniPuan) {
   if (r.ben && r.ben.sira > r.ilk.length) gov += `<div class="nokta">• • •</div>${satir(r.ben)}`;
   gov += `</div><div class="alt" style="text-align:center;margin-top:6px">${r.toplam} oyuncu</div>`;
   gov += k ? `<div class="ben-cubuk">Sen: ${adGoster(k.no)} <button data-k="degil">Ben değilim</button></div>`
-           : `<div class="ben-cubuk"><button data-k="degil">Adımı seç</button></div>`;
+           : `<div class="ben-cubuk"><button data-k="degil">Adını seç</button></div>`;
   pencere(baslik(o), gov, '<button class="bt" data-k="kapat">Kapat</button>');
   $('[data-k="kapat"]').onclick = kapat;
   $('[data-k="degil"]').onclick = () => { hafiza.sil('skorKimlik'); adSec(o, yeniPuan != null ? () => kaydet(o) : () => listeAc(o)); };
