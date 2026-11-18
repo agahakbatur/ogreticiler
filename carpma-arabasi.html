@@ -89,6 +89,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 </div>
 </div>
 
+<!-- Ortak rekor tablosu (dosya yoksa ya da kurulmadıysa oyun yine çalışır) -->
+<script src="skor-sistemi.js"></script>
 <script>
 /* =====================================================================
    ÇARPMA ARABASI – MATEMATİK YARIŞI
@@ -764,6 +766,7 @@ function menu() {
     <div class="grp"><div class="t">Yolda engeller</div><div class="opts c2">${optBtns('obst', [[0, 'Kapalı', 'sadece sorular'], [1, 'Açık', 'engellerden kaç']], cfg.obst)}</div></div>
     <div class="grp" id="obstLvGrp" style="display:${cfg.obst ? 'block' : 'none'}"><div class="t">Engel zorluğu</div><div class="opts c3">${optBtns('obstLv', [[1, '1', 'az engel'], [2, '2', 'biraz daha fazla'], [3, '3', 'çok engel + yol kapalı']], cfg.obstLv)}</div></div>
     <p style="font-size:12px;color:#6b6250">50 doğru cevapla yarışı bitir · Her 5 doğru: hız +%10 · Her yanlış: hız −%10 · Her 10 doğru: +1 can</p>
+    ${skorVar() ? '<button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>' : ''}
     <div class="sticky"><button class="primary" id="go" style="margin-top:0">YARIŞA BAŞLA 🏁</button></div>`;
   $('overlay').style.display = 'flex';
   $('dialog').querySelectorAll('.opt').forEach(b => b.onclick = () => {
@@ -778,6 +781,7 @@ function menu() {
     withCtx(x, () => drawKart(r.width / 2, r.height - 4, Math.min(r.width * .6, r.height * 1.2), CARS[+c.dataset.car], 0, false));
   });
   $('go').onclick = startRace;
+  if ($('recBtn')) $('recBtn').onclick = rekorlar;
 }
 function withCtx(c, fn) { const old = ctx; ctx = c; try { fn(); } finally { ctx = old; } }
 
@@ -805,6 +809,12 @@ function togglePause() {
     $('resume').onclick = togglePause; $('toMenu').onclick = menu;
   } else if (mode === 'pause') { $('overlay').style.display = 'none'; mode = 'race'; last = performance.now(); }
 }
+// Rekor listesi: soru türü + zorluk aynı olanlar kendi aralarında yarışır
+const DIFF_AD = { kolay: 'Kolay', orta: 'Orta', zor: 'Zor' };
+function skorBilgi() { return { oyun: 'carpma', oyunAd: 'Çarpma Arabası', liste: cfg.type + '-' + cfg.diff, listeAd: cfg.type + ' içinde · ' + DIFF_AD[cfg.diff] }; }
+const skorVar = () => !!(window.Skor && window.Skor.kurulu);
+function rekorlar() { if (skorVar()) window.Skor.listeGoster(skorBilgi()); }
+
 function finish(won) {
   mode = 'end';
   hud();
@@ -816,9 +826,12 @@ function finish(won) {
     $('dialog').innerHTML = `<h1>${title}</h1><p>${msg}</p>
       <div class="res"><div>Puan<b>${S.score}</b></div><div>Doğru<b>${S.correct}</b></div><div>Yanlış<b>${S.wrong}</b></div>
       <div>Altın<b>${S.coins}</b></div><div>Geçilen rakip<b>${S.passes}</b></div><div>Süre<b>${mm}:${ss}</b></div></div>
-      <button class="primary" id="again">TEKRAR YARIŞ 🏁</button><button class="secondary" id="toMenu">Ayarları değiştir</button>`;
+      <button class="primary" id="again">TEKRAR YARIŞ 🏁</button>${skorVar() ? '<button class="secondary" id="recBtn">🏆 Rekorlar</button>' : ''}<button class="secondary" id="toMenu">Ayarları değiştir</button>`;
     $('overlay').style.display = 'flex';
     $('again').onclick = startRace; $('toMenu').onclick = menu;
+    if ($('recBtn')) $('recBtn').onclick = rekorlar;
+    // Puanı ortak rekor listesine gönder (ad seçimi ve tablo skor-sistemi.js içinde)
+    if (skorVar()) window.Skor.oyunBitti(Object.assign(skorBilgi(), { puan: S.score, detay: `${S.correct} doğru, ${S.wrong} yanlış${won ? '' : ', canlar bitti'}` }));
   }, won ? 900 : 700);
 }
 
