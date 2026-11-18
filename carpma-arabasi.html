@@ -50,6 +50,10 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 .opt small{display:block;font-size:11px;font-weight:700;color:#7a6f57}
 .opt.active{border:3px solid #c2410c;background:#fff1de;color:#9a3412}
 .opt canvas{position:static;width:100%;height:48px;pointer-events:none}
+.oyuncu{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:#fff;border:2px solid #eedcae;border-radius:12px}
+.oyuncu .t{font-weight:900;font-size:14px;color:#2a2f40}
+.oyuncu b{font-size:17px;color:#9a3412}
+.oyuncu button{padding:5px 12px;border:2px solid #e2c98a;border-radius:10px;background:#fff7e8;font-weight:900;font-size:14px;cursor:pointer;color:#2a2f40}
 .speedrow{display:flex;align-items:center;gap:10px}
 .speedrow input{flex:1;accent-color:#c2410c;height:28px}
 .speedrow b{min-width:52px;font-size:18px;color:#c2410c}
@@ -66,7 +70,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 <body>
 <div id="app">
 <header>
-  <div class="left"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🏎️ ÇARPMA ARABASI <span style="font-size:.6em;opacity:.8;letter-spacing:0">v1.00</span></div></div>
+  <div class="left"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🏎️ ÇARPMA ARABASI <span style="font-size:.6em;opacity:.8;letter-spacing:0">v1.01</span></div></div>
   <div class="stats">
     <div class="stat" id="lives">❤❤❤</div>
     <div class="stat">DOĞRU <b id="sCorrect">0/50</b></div>
@@ -90,7 +94,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 </div>
 
 <!-- Ortak rekor tablosu (dosya yoksa ya da kurulmadıysa oyun yine çalışır) -->
-<script src="https://agahakbatur.github.io/ogreticiler/libs/skor-sistemi.js"></script>
+<script src="skor-sistemi.js"></script>
 <script>
 /* =====================================================================
    ÇARPMA ARABASI – MATEMATİK YARIŞI
@@ -759,6 +763,8 @@ function menu() {
   mode = 'menu'; S = null;
   $('qtext').innerHTML = '&nbsp;'; $('qtext').className = ''; [...$('chips').children].forEach(c => c.textContent = '');
   $('dialog').innerHTML = `<h1>ÇARPMA ARABASI</h1><h2>Matematik Yarışı · Doğru cevabın şeridine geç!</h2>
+    ${skorVar() ? `<div class="oyuncu"><span class="t">Oyuncu</span><b id="oyuncuAd">${oyuncuMetni()}</b><button id="adBtn">${window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç'}</button></div>
+    <button class="secondary" id="recBtn" style="margin-top:6px">🏆 Rekorlar (tür ve zorluğa göre)</button>` : ''}
     <div class="grp"><div class="t">Soru türü</div><div class="opts c2">${optBtns('type', [[5, '5 içinde', '2. çarpan en fazla 5'], [10, '10 içinde', '2. çarpan en fazla 10']], cfg.type)}</div></div>
     <div class="grp"><div class="t">Zorluk</div><div class="opts c3">${optBtns('diff', [['kolay', 'Kolay', 'ilk çarpan 1–5'], ['orta', 'Orta', 'ilk çarpan 2–6'], ['zor', 'Zor', 'ilk çarpan 3–7']], cfg.diff)}</div></div>
     <div class="grp"><div class="t">Başlangıç hızı</div><div class="speedrow"><input type="range" id="spd" min="50" max="150" step="10" value="${cfg.speed}"><b id="spdV">%${cfg.speed}</b></div></div>
@@ -768,8 +774,7 @@ function menu() {
     <div class="grp"><div class="t">Yolda engeller</div><div class="opts c2">${optBtns('obst', [[0, 'Kapalı', 'sadece sorular'], [1, 'Açık', 'engellerden kaç']], cfg.obst)}</div></div>
     <div class="grp" id="obstLvGrp" style="display:${cfg.obst ? 'block' : 'none'}"><div class="t">Engel zorluğu</div><div class="opts c3">${optBtns('obstLv', [[1, '1', 'az engel'], [2, '2', 'biraz daha fazla'], [3, '3', 'çok engel + yol kapalı']], cfg.obstLv)}</div></div>
     <p style="font-size:12px;color:#6b6250">50 doğru cevapla yarışı bitir · Her 5 doğru: hız +%10 · Her yanlış: hız −%10 · Her 10 doğru: +1 can</p>
-    ${skorVar() ? `<div class="grp" style="text-align:center"><div class="t" style="text-align:center">Oyuncu</div><span id="oyuncuAd" style="font-weight:900;font-size:17px">${oyuncuMetni()}</span> <button id="adBtn" style="display:inline-block;padding:6px 12px;margin-left:6px;border:2px solid #e2c98a;border-radius:10px;background:#fff;font-weight:900;cursor:pointer">${window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç'}</button></div>
-    <button class="secondary" id="recBtn">🏆 Rekorlar (seçili soru türü ve zorluk)</button>` : `<p style="font-size:11px;color:#9a8f78;margin:10px 0 0">${window.Skor ? 'Rekor tablosu kapalı: skor-sistemi.js dosyasına tablo adresi girilmemiş.' : 'Rekor tablosu kapalı: skor-sistemi.js dosyası bulunamadı.'}</p>`}
+    ${skorVar() ? '' : `<p style="font-size:11px;color:#9a8f78;margin:10px 0 0">${window.Skor ? 'Rekor tablosu kapalı: skor-sistemi.js dosyasına tablo adresi girilmemiş.' : 'Rekor tablosu kapalı: skor-sistemi.js dosyası bulunamadı.'}</p>`}
     <div class="sticky"><button class="primary" id="go" style="margin-top:0">YARIŞA BAŞLA 🏁</button></div>`;
   $('overlay').style.display = 'flex';
   $('dialog').querySelectorAll('.opt').forEach(b => b.onclick = () => {
