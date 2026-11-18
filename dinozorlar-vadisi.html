@@ -74,6 +74,11 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 .res{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:8px 0}
 .res div{background:#fff;border:2px solid #e2cfa6;border-radius:12px;padding:8px 12px;font-weight:800}
 .res b{color:#b5531b;font-size:20px}
+.oyuncu{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 10px;background:#fff;border:2px solid #e2cfa6;border-radius:12px}
+.oyuncu .t{font-weight:900;font-size:14px;color:#2f6b3a}
+.oyuncu b{font-size:17px;color:#b5531b}
+.oyuncu button{padding:5px 12px;border:2px solid #c9a56a;border-radius:10px;background:#fff8e8;font-weight:900;font-size:14px;cursor:pointer;color:#3a2a14}
+.skor-not{font-size:11px!important;color:#9a8f78!important;margin:10px 0 0!important}
 @media(max-height:560px){#app{padding:5px;gap:4px}header{min-height:32px}.stat{padding:3px 7px}.dialog{padding:12px}.dialog p{margin:4px 0 8px}.primary{margin-top:8px;padding:10px}}
 @media(orientation:portrait){
   #app{height:100dvh;width:100vw;padding:7px}
@@ -88,11 +93,12 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 <body>
 <div id="app">
 <header>
-  <div class="brandwrap"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🦕 DİNOZORLAR VADİSİ</div></div>
+  <div class="brandwrap"><a class="homebtn" href="https://agahakbatur.github.io/ogreticiler/index.html">🏠 Ana Menü</a><div class="brand">🦕 DİNOZORLAR VADİSİ <span style="font-size:.6em;opacity:.8;letter-spacing:0">v1.00</span></div></div>
   <div class="stats">
     <div class="stat">BÖLÜM <b id="sBolum">1</b></div>
     <div class="stat">SORU <b id="sSoru">1/20</b></div>
     <div class="stat">🥚 <b id="sAltin">0</b></div>
+    <div class="stat">PUAN <b id="sPuan">0</b></div>
   </div>
 </header>
 <div id="stage">
@@ -107,6 +113,8 @@ footer{display:flex;justify-content:space-between;align-items:center;gap:8px;col
 <footer><span id="regionName">Yeşil Orman</span><button class="smallbtn" id="soundBtn">🔊 Ses açık</button></footer>
 </div>
 
+<!-- Ortak rekor tablosu (dosya yoksa ya da kurulmadıysa oyun yine çalışır) -->
+<script src="/ogreticiler/libs/skor-sistemi.js"></script>
 <script>
 /* =====================================================================
    DİNOZORLAR VADİSİ – KAYIP YAVRULAR
@@ -366,6 +374,33 @@ const DinoEngine = (() => {
 
   /* ---------- Durum ---------- */
   let mode = 's1-10', bolum = 1, questions = [], qi = 0, golden = 0, results = [], firstTry = true, busy = true, current = [];
+  // Puan: yavruyu 1. denemede bulmak 10, 2. denemede 5, 3. denemede 2. Bölümler boyunca toplanır.
+  let puan = 0, deneme = 1;
+  const PUAN = [10, 5, 2];
+
+  /* ---------- Rekor listesi (libs/skor-sistemi.js) ---------- */
+  // Aynı seviyeyi oynayanlar kendi aralarında yarışır: 1-10, 1-20, 2-20, 2-100
+  const skorVar = () => !!(window.Skor && window.Skor.kurulu);
+  function skorBilgi() {
+    const m = DinoEngine.MODES[mode];
+    return { oyun: 'dinozor', oyunAd: 'Dinozorlar Vadisi', liste: mode.slice(1), listeAd: m.sinif + '. sınıf · ' + m.ad + ' (' + m.alt + ')' };
+  }
+  function oyuncuMetni() { const o = skorVar() && window.Skor.oyuncu(); return o ? o.e + ' ' + o.ad : 'Ad seçilmedi'; }
+  function rekorlar() { if (skorVar()) window.Skor.listeGoster(skorBilgi()); }
+  function oyuncuHTML() {
+    return skorVar() ? `<div class="oyuncu"><span class="t">Oyuncu</span><b id="oyuncuAd">${oyuncuMetni()}</b><button id="adBtn">${window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç'}</button></div>
+      <button class="secondary" id="recBtn" style="margin-top:6px">🏆 Rekorlar (seviyeye göre)</button>` : '';
+  }
+  function skorNotu() {
+    return skorVar() ? '' : `<p class="skor-not">${window.Skor ? 'Rekor tablosu kapalı: skor-sistemi.js dosyasına tablo adresi girilmemiş.' : 'Rekor tablosu kapalı: skor-sistemi.js dosyası bulunamadı.'}</p>`;
+  }
+  function oyuncuBagla() {
+    if ($('recBtn')) $('recBtn').onclick = rekorlar;
+    if ($('adBtn')) $('adBtn').onclick = async () => {
+      await (window.Skor.oyuncu() ? window.Skor.adDegistir(skorBilgi()) : window.Skor.adSor(skorBilgi()));
+      $('oyuncuAd').textContent = oyuncuMetni(); $('adBtn').textContent = window.Skor.oyuncu() ? 'Değiştir' : 'Ad seç';
+    };
+  }
 
   function toast(text, cls) {
     const t = $('toast'); t.textContent = text; t.className = 'show ' + (cls || '');
@@ -375,13 +410,14 @@ const DinoEngine = (() => {
     $('sBolum').textContent = bolum;
     $('sSoru').textContent = Math.min(qi + 1, 20) + '/20';
     $('sAltin').textContent = golden;
+    $('sPuan').textContent = puan;
     $('nestCount').textContent = results.length;
     $('progress').innerHTML = Array.from({ length: 20 }, (_, i) => `<span class="${results[i] || (i === qi ? 'cur' : '')}"></span>`).join('');
   }
 
   function showQuestion() {
     const q = questions[qi];
-    firstTry = true; busy = false;
+    firstTry = true; deneme = 1; busy = false;
     $('qtext').className = ''; $('qtext').textContent = `${q.a} − ${q.b} = ?`;
     $('qhint').style.visibility = qi < 3 && bolum === 1 ? 'visible' : 'hidden';
     const cols = shuffle(COLORS).slice(0, 3), kinds = shuffle(KINDS);
@@ -400,6 +436,7 @@ const DinoEngine = (() => {
       busy = true;
       const res = firstTry ? 'gold' : 'ok';
       if (firstTry) golden++;
+      puan += PUAN[Math.min(deneme, 3) - 1];
       results.push(res);
       sfx(firstTry ? 'gold' : 'ok');
       toast(firstTry ? '🥚 Harika! Altın yumurta!' : '🦕 Yavru kurtarıldı!', 'good');
@@ -418,7 +455,7 @@ const DinoEngine = (() => {
         if (qi < questions.length) setTimeout(showQuestion, 250); else setTimeout(endBolum, 500);
       }, 1300);
     } else {
-      firstTry = false;
+      firstTry = false; deneme++;
       btn.classList.remove('pop'); btn.classList.add('sad'); btn.setAttribute('aria-disabled', 'true');
       sfx('no'); toast('Bu yavru değil. Tekrar dene!', 'bad');
     }
@@ -440,29 +477,40 @@ const DinoEngine = (() => {
     $('dinos').innerHTML = '';
     $('dialog').innerHTML = `<h1>BÖLÜM ${bolum} TAMAMLANDI!</h1>
       <div class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3 - stars)}</span></div>
-      <div class="res"><div>🦕 Kurtarılan yavru<br><b>20 / 20</b></div><div>🥚 Altın yumurta<br><b>${golden} / 20</b></div></div>
+      <div class="res"><div>🦕 Kurtarılan yavru<br><b>20 / 20</b></div><div>🥚 Altın yumurta<br><b>${golden} / 20</b></div><div>⭐ Toplam puan<br><b>${puan}</b></div></div>
       <p>Altın yumurta, yavruyu ilk denemede bulunca kazanılır.<br>Sıradaki bölge: <b>${next}</b></p>
       <button class="primary" id="nextBtn">SONRAKİ BÖLÜM ▶</button>
+      ${skorVar() ? '<button class="secondary" id="recBtn">🏆 Rekorlar</button>' : ''}
       <button class="secondary" id="menuBtn">Seviye değiştir</button>`;
     $('overlay').style.display = 'flex';
     $('nextBtn').onclick = () => { bolum++; startBolum(); };
     $('menuBtn').onclick = startMenu;
+    if ($('recBtn')) $('recBtn').onclick = rekorlar;
+    // Bölümler boyunca toplanan puan gönderilir; listede her adın en iyi puanı görünür
+    if (skorVar()) window.Skor.oyunBitti(Object.assign(skorBilgi(), { puan, detay: `${bolum} bölüm, ${golden} altın yumurta (son bölüm)` }));
   }
 
   function startMenu() {
-    busy = true; bolum = 1; $('dinos').innerHTML = '';
+    busy = true; bolum = 1; puan = 0; $('dinos').innerHTML = ''; hud();
     const btn = k => { const m = DinoEngine.MODES[k]; return `<button class="choice${k === mode ? ' active' : ''}" data-mode="${k}">${m.ad}<small>${m.alt}</small></button>`; };
     $('dialog').innerHTML = `<h1>DİNOZORLAR VADİSİ</h1><h2>Kayıp Yavrular</h2>
+      ${oyuncuHTML()}
       <p>Yavru dinozorlar kayboldu! İşlemi çöz, doğru cevabı taşıyan yavruyu bul ve yuvasına götür.</p>
       <div class="grade">1. SINIF</div><div class="choices">${btn('s1-10')}${btn('s1-20')}</div>
       <div class="grade">2. SINIF</div><div class="choices">${btn('s2-20')}${btn('s2-100')}</div>
       <button class="primary" id="startBtn">MACERAYA BAŞLA 🦕</button>
-      <p style="font-size:11px;margin:8px 0 0">Her bölüm 20 soru · Çevrimdışı oynanır · Dokunmatik ve fare destekli</p>`;
+      <p style="font-size:11px;margin:8px 0 0">Her bölüm 20 soru · Çevrimdışı oynanır · Dokunmatik ve fare destekli</p>${skorNotu()}`;
     $('dialog').querySelectorAll('.choice').forEach(b => b.onclick = () => {
       $('dialog').querySelectorAll('.choice').forEach(x => x.classList.remove('active'));
       b.classList.add('active'); mode = b.dataset.mode;
     });
-    $('startBtn').onclick = () => { sfx('pop'); startBolum(); };
+    // Ad oyunun başında seçilir; seçilmemişse önce ad penceresi açılır
+    $('startBtn').onclick = async () => {
+      sfx('pop');
+      if (skorVar() && !window.Skor.oyuncu()) await window.Skor.adSor(skorBilgi());
+      startBolum();
+    };
+    oyuncuBagla();
     $('overlay').style.display = 'flex';
   }
 
